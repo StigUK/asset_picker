@@ -236,9 +236,11 @@ class DefaultAssetPickerProvider
     this.requestType = RequestType.image,
     this.sortPathDelegate = SortPathDelegate.common,
     this.filterOptions,
+    this.usedAssets,
   }) {
     Singleton.sortPathDelegate = sortPathDelegate ?? SortPathDelegate.common;
     // Call [getAssetList] with route duration when constructing.
+    showUsedAssetsCheckbox = usedAssets != null;
     Future<void>(() async {
       await getPaths();
       await getAssetsFromCurrentPath();
@@ -251,11 +253,13 @@ class DefaultAssetPickerProvider
     this.requestType = RequestType.image,
     this.sortPathDelegate = SortPathDelegate.common,
     this.filterOptions,
+    this.usedAssets,
     super.maxAssets,
     super.pageSize = 80,
     super.pathThumbnailSize,
   }) {
     Singleton.sortPathDelegate = sortPathDelegate ?? SortPathDelegate.common;
+    showUsedAssetsCheckbox = usedAssets != null;
   }
 
   /// Request assets type.
@@ -272,6 +276,8 @@ class DefaultAssetPickerProvider
   /// Will be merged into the base configuration.
   /// 将会与基础条件进行合并。
   final FilterOptionGroup? filterOptions;
+
+  final List<String>? usedAssets;
 
   @override
   set currentPath(AssetPathEntity? value) {
@@ -296,6 +302,20 @@ class DefaultAssetPickerProvider
     }
     notifyListeners();
   }
+
+  ///Hide user assets
+  set hideUsed(bool value) {
+    if (value != _hideUsed) {
+      _hideUsed = value;
+      notifyListeners();
+    }
+  }
+
+  bool showUsedAssetsCheckbox = false;
+
+  bool get hideUsed => _hideUsed;
+
+  bool _hideUsed = false;
 
   @override
   Future<void> getPaths() async {
@@ -344,7 +364,7 @@ class DefaultAssetPickerProvider
       page: page,
       size: pageSize,
     );
-    _currentAssets = list.toList();
+    _currentAssets = _filterAssets(list.toList());
     _hasAssetsToDisplay = currentAssets.isNotEmpty;
     notifyListeners();
   }
@@ -444,5 +464,25 @@ class DefaultAssetPickerProvider
     } else {
       isAssetsEmpty = true;
     }
+  }
+
+  List<AssetEntity> _filterAssets(List<AssetEntity> list) {
+    if (hideUsed && usedAssets != null && usedAssets!.isNotEmpty) {
+      list.removeWhere(
+        (AssetEntity element) =>
+            element.relativePath == '/' ||
+            usedAssets!.any((String element2) => element2 == element.id),
+      );
+    } else {
+      list.removeWhere(
+        (AssetEntity element) => element.relativePath == '/',
+      );
+    }
+    return list;
+  }
+
+  Future<void> onHideUsedAssets(bool value) async {
+    _hideUsed = value;
+    return switchPath(currentPath);
   }
 }
