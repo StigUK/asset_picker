@@ -139,7 +139,6 @@ class AssetPicker<Asset, Path> extends StatefulWidget {
   }
 
   /// Call the picker with provided [delegate] and [provider].
-  /// 通过指定的 [delegate] 和 [provider] 调用选择器
   static Future<List<Asset>?> pickAssetsWithDelegate<Asset, Path,
       PickerProvider extends AssetPickerProvider<Asset, Path>>(
     BuildContext context, {
