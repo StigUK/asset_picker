@@ -1,19 +1,125 @@
+<!-- Copyright 2019 The FlutterCandies author. All rights reserved.
+Use of this source code is governed by an Apache license
+that can be found in the LICENSE file. -->
+
 # Changelog
 
-## 7.0.0-dev.2
+## 7.3.2
 
-- Add full semantics support. (#232)
+### Improvements
+
+- Improve `onChangingSelected` in `AssetPickerViewerBuilderDelegate`. (#332)
+- Fix typo in `README.md`. (#333)
+
+### Fixes
+
+- Fix behaviors when unselecting all assets in the viewer. (#335)
+
+## 7.3.1
+
+### Improvements
+
+- Improve selection callers between picker and viewer. (#327)
+
+## 7.3.0
+
+Migrate to Flutter 3, drop supports for previous Flutter versions.
+
+## 7.2.0
+
+### New features
+
+- Separate `AssetPickerDelegate` (#315),
+  which provides the ability to override methods within the `AssetPicker`.
+
+### Improvements
+
+- Improve `specialItemBuilder`. (#314)
+
+## 7.1.2
+
+### Fixes
+
+- Fix context usages for inherited theme data.
+- Fix unlinked path name builder.
+
+### Improvements
+
+- Update how paths get update. (#312)
+- Expose `DefaultAssetPickerProvider.forTest`.
+
+## 7.1.1
+
+### Fixes
+
+- Fix `selectPredicate` with the viewer. (#307)
+
+## 7.1.0
+
+### New features
+
+- Add `PathNameBuilder`. (#303)
+- Add `LimitedPermissionOverlayPredicate`. (#287)
+
+## 7.0.5
+
+### Improvements
+
+- Support compile on the Web. (#273)
+
+## 7.0.4
+
+### Improvements
+
+- Make all text delegates const.
+
+## 7.0.3
+
+### Fixes
+
+- Fix the broken semantics on iOS/macOS. (#272)
+
+## 7.0.2
+
+### Fixes
+
+- Fix wrong conditions judging when obtaining path thumbnails.
+
+## 7.0.1
+
+### Improvements
+
+- Support semantics with Japanese text delegates. (#266).
+
+### Fixes
+
+- Obtain the path thumbnail only when asset is image or video.
+
+## 7.0.0
+
+To know more about breaking changes, see [Migration Guide][].
+
+### New features
+
+- Support predictable special item display. (#264)
+- Support live photos display. (#251)
+- Expose `AssetPickerPageRoute` for customization. (#248)
+- Add full semantics support. (#232, #235, #240, #242, #243, #245, #254)
+
+### Improvements
+
+- Improve scaling with select indicators and numbers.
 - Implement the default light theme. (#234)
 
-## 7.0.0-dev.1
+### Fixes
 
-- Migrate to the latest photo_manager.
+- Fix `LocallyAvailableBuilder` with more edge conditions. (#263)
+- Fix potentially "No elements" error with thumbnails.
 
 ## 6.3.1
 
-- Improve image type determine when resolving image data.
-  This mostly resolved the occasionally HEIC loading issue
-  when apps are running under the release mode.
+- Improve image type determine when resolving image data.This mostly resolved the occasionally HEIC loading issue when
+  apps are running under the release mode.
 
 ## 6.3.0
 
@@ -42,8 +148,7 @@
 
 ## 6.2.0
 
-- Introduce `shouldRevertGrid` to determine whether the assets grid should revert.
-  It's set with Apple OS accordingly before.
+- Introduce `shouldRevertGrid` to determine whether the assets grid should be reverted.
 - Upgrade `photo_manager` to resolve issues against `AssetEntity`s comparison.
 
 ## 6.1.2
@@ -81,8 +186,7 @@
 
 ## 6.0.2
 
-- Expose `shouldReversePreview` for `AssetPickerViewerBuilderDelegate`,
-  which provides a more precise control for the viewer.
+- Expose `shouldReversePreview` for `AssetPickerViewerBuilderDelegate`.
 
 ## 6.0.1
 
@@ -93,6 +197,7 @@
 ## 6.0.0
 
 ### New features
+
 - Sync all UI details from WeChat 8.x.
 - Integrate iCloud progress overview in previews.
 - Change the permission from the app settings when it's limited.
@@ -100,10 +205,10 @@
 - Fit the assets' grid's layout as the iOS `Photos` app (reverted and started from the bottom).
 - Add Arabic language text delegate.
 - Allow using `AssetPicker` and `AssetPickerViewer` directly with delegates.
-- Add `keepScrollOffset` feature for the `AssetPickerBuilderDelegate`,
-  which allow users to keep the scroll offset between pickings.
+- Add `keepScrollOffset` feature for the `AssetPickerBuilderDelegate`.
 
 ### Improvements
+
 - Items that being banned from select (reached max assets or type conflict)
   will have a stronger color cover to indicate.
 - Video preview in the [SpecialPickerType.wechatMoment] is completely different from other previews.
@@ -114,9 +219,7 @@
 - Improve text scale handling. (#177)
 - Reduce font size for couple texts.
 
-### Breaking changes
-Multiple refactoring happened with delegates,
-see [Migration Guide](guides/migration_guide.md) for more details.
+To know more about breaking changes, see [Migration Guide][].
 
 ## 5.5.8
 
@@ -263,8 +366,7 @@ see [Migration Guide](guides/migration_guide.md) for more details.
 - Migrate to non-nullable by default.
 - `CustomItemBuilder` -> `SpecialItemBuilder`, `CustomItemPosition` -> `SpecialItemPosition` .
 - Abstract `AssetPickerBuilderDelegate<A, P>`, `AssetPickerViewerBuilderDelegate<A, P>`,
-  `AssetPickerProvider<A, P>`, and minify the `AssetPickerViewerProvider<A>`. Support
-  custom types by generic type.
+  `AssetPickerProvider<A, P>`, and minify the `AssetPickerViewerProvider<A>`. Support custom types by generic type.
 - The `assets` param in `AssetPickerViewer.pushToViewer` is now `previewAssets` .
 
 ## 4.2.2
@@ -403,7 +505,7 @@ see [Migration Guide](guides/migration_guide.md) for more details.
 ## 1.5.0
 
 - Bumping flutter sdk minimum version to `1.17.0`.
-- Declare API stability and compatibility with 1.0.0 
+- Declare API stability and compatibility with 1.0.0
   ( more details at: https://github.com/flutter/flutter/wiki/Package-migration-to-1.0.0 ).
 
 ## 1.4.1
@@ -462,3 +564,5 @@ see [Migration Guide](guides/migration_guide.md) for more details.
 ## 1.0.0
 
 - Initial release.
+
+[Migration Guide]: guides/migration_guide.md

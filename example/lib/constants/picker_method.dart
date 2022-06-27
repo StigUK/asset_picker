@@ -1,10 +1,17 @@
-///
-/// [Author] Alex (https://github.com/Alex525)
-/// [Date] 2020-05-30 20:56
-///
+// Copyright 2019 The FlutterCandies author. All rights reserved.
+// Use of this source code is governed by an Apache license that can be found
+// in the LICENSE file.
+
 import 'package:flutter/material.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 import 'package:wechat_camera_picker/wechat_camera_picker.dart';
+
+Future<AssetEntity?> _pickFromCamera(BuildContext c) {
+  return CameraPicker.pickFromCamera(
+    c,
+    pickerConfig: const CameraPickerConfig(enableRecording: true),
+  );
+}
 
 /// Define a regular pick method.
 class PickMethod {
@@ -24,9 +31,11 @@ class PickMethod {
       method: (BuildContext context, List<AssetEntity> assets) {
         return AssetPicker.pickAssets(
           context,
-          maxAssets: maxAssetsCount,
-          selectedAssets: assets,
-          requestType: RequestType.image,
+          pickerConfig: AssetPickerConfig(
+            maxAssets: maxAssetsCount,
+            selectedAssets: assets,
+            requestType: RequestType.image,
+          ),
         );
       },
     );
@@ -40,9 +49,11 @@ class PickMethod {
       method: (BuildContext context, List<AssetEntity> assets) {
         return AssetPicker.pickAssets(
           context,
-          maxAssets: maxAssetsCount,
-          selectedAssets: assets,
-          requestType: RequestType.video,
+          pickerConfig: AssetPickerConfig(
+            maxAssets: maxAssetsCount,
+            selectedAssets: assets,
+            requestType: RequestType.video,
+          ),
         );
       },
     );
@@ -56,9 +67,11 @@ class PickMethod {
       method: (BuildContext context, List<AssetEntity> assets) {
         return AssetPicker.pickAssets(
           context,
-          maxAssets: maxAssetsCount,
-          selectedAssets: assets,
-          requestType: RequestType.audio,
+          pickerConfig: AssetPickerConfig(
+            maxAssets: maxAssetsCount,
+            selectedAssets: assets,
+            requestType: RequestType.audio,
+          ),
         );
       },
     );
@@ -73,35 +86,41 @@ class PickMethod {
       name: 'Pick from camera',
       description: 'Allow pick an asset through camera.',
       method: (BuildContext context, List<AssetEntity> assets) {
+        const AssetPickerTextDelegate textDelegate = AssetPickerTextDelegate();
         return AssetPicker.pickAssets(
           context,
-          maxAssets: maxAssetsCount,
-          selectedAssets: assets,
-          requestType: RequestType.common,
-          specialItemPosition: SpecialItemPosition.prepend,
-          specialItemBuilder: (BuildContext context) {
-            return Semantics(
-              label: AssetPickerTextDelegate().sActionUseCameraHint,
-              button: true,
-              onTapHint: AssetPickerTextDelegate().sActionUseCameraHint,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () async {
-                  Feedback.forTap(context);
-                  final AssetEntity? result = await CameraPicker.pickFromCamera(
-                    context,
-                    enableRecording: true,
-                  );
-                  if (result != null) {
-                    handleResult(context, result);
-                  }
-                },
-                child: const Center(
-                  child: Icon(Icons.camera_enhance, size: 42.0),
+          pickerConfig: AssetPickerConfig(
+            maxAssets: maxAssetsCount,
+            selectedAssets: assets,
+            specialItemPosition: SpecialItemPosition.prepend,
+            specialItemBuilder: (
+              BuildContext context,
+              AssetPathEntity? path,
+              int length,
+            ) {
+              if (path?.isAll != true) {
+                return null;
+              }
+              return Semantics(
+                label: textDelegate.sActionUseCameraHint,
+                button: true,
+                onTapHint: textDelegate.sActionUseCameraHint,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () async {
+                    Feedback.forTap(context);
+                    final AssetEntity? result = await _pickFromCamera(context);
+                    if (result != null) {
+                      handleResult(context, result);
+                    }
+                  },
+                  child: const Center(
+                    child: Icon(Icons.camera_enhance, size: 42.0),
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         );
       },
     );
@@ -114,42 +133,49 @@ class PickMethod {
       description: 'Take a photo or video with the camera picker, '
           'select the result and stay in the entities list.',
       method: (BuildContext context, List<AssetEntity> assets) {
+        const AssetPickerTextDelegate textDelegate = AssetPickerTextDelegate();
         return AssetPicker.pickAssets(
           context,
-          maxAssets: maxAssetsCount,
-          selectedAssets: assets,
-          requestType: RequestType.common,
-          specialItemPosition: SpecialItemPosition.prepend,
-          specialItemBuilder: (BuildContext context) {
-            return Semantics(
-              label: AssetPickerTextDelegate().sActionUseCameraHint,
-              button: true,
-              onTapHint: AssetPickerTextDelegate().sActionUseCameraHint,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () async {
-                  final AssetEntity? result = await CameraPicker.pickFromCamera(
-                    context,
-                    enableRecording: true,
-                  );
-                  if (result == null) {
-                    return;
-                  }
-                  final AssetPicker<AssetEntity, AssetPathEntity> picker =
-                      context.findAncestorWidgetOfExactType()!;
-                  final DefaultAssetPickerBuilderDelegate builder =
-                      picker.builder as DefaultAssetPickerBuilderDelegate;
-                  final DefaultAssetPickerProvider p = builder.provider;
-                  await p.currentPath!.refreshPathProperties();
-                  await p.switchPath(p.currentPath!);
-                  p.selectAsset(result);
-                },
-                child: const Center(
-                  child: Icon(Icons.camera_enhance, size: 42.0),
+          pickerConfig: AssetPickerConfig(
+            maxAssets: maxAssetsCount,
+            selectedAssets: assets,
+            specialItemPosition: SpecialItemPosition.prepend,
+            specialItemBuilder: (
+              BuildContext context,
+              AssetPathEntity? path,
+              int length,
+            ) {
+              if (path?.isAll != true) {
+                return null;
+              }
+              return Semantics(
+                label: textDelegate.sActionUseCameraHint,
+                button: true,
+                onTapHint: textDelegate.sActionUseCameraHint,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () async {
+                    final AssetEntity? result = await _pickFromCamera(context);
+                    if (result == null) {
+                      return;
+                    }
+                    final AssetPicker<AssetEntity, AssetPathEntity> picker =
+                        context.findAncestorWidgetOfExactType()!;
+                    final DefaultAssetPickerBuilderDelegate builder =
+                        picker.builder as DefaultAssetPickerBuilderDelegate;
+                    final DefaultAssetPickerProvider p = builder.provider;
+                    p.currentPath =
+                        await p.currentPath!.obtainForNewProperties();
+                    await p.switchPath(p.currentPath);
+                    p.selectAsset(result);
+                  },
+                  child: const Center(
+                    child: Icon(Icons.camera_enhance, size: 42.0),
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         );
       },
     );
@@ -163,9 +189,10 @@ class PickMethod {
       method: (BuildContext context, List<AssetEntity> assets) {
         return AssetPicker.pickAssets(
           context,
-          maxAssets: maxAssetsCount,
-          selectedAssets: assets,
-          requestType: RequestType.common,
+          pickerConfig: AssetPickerConfig(
+            maxAssets: maxAssetsCount,
+            selectedAssets: assets,
+          ),
         );
       },
     );
@@ -180,11 +207,13 @@ class PickMethod {
       method: (BuildContext context, List<AssetEntity> assets) {
         return AssetPicker.pickAssets(
           context,
-          gridCount: 3,
-          pageSize: 120,
-          maxAssets: maxAssetsCount,
-          selectedAssets: assets,
-          requestType: RequestType.all,
+          pickerConfig: AssetPickerConfig(
+            gridCount: 3,
+            pageSize: 120,
+            maxAssets: maxAssetsCount,
+            selectedAssets: assets,
+            requestType: RequestType.all,
+          ),
         );
       },
     );
@@ -198,18 +227,20 @@ class PickMethod {
       method: (BuildContext context, List<AssetEntity> assets) {
         return AssetPicker.pickAssets(
           context,
-          maxAssets: maxAssetsCount,
-          selectedAssets: assets,
-          requestType: RequestType.video,
-          filterOptions: FilterOptionGroup()
-            ..setOption(
-              AssetType.video,
-              const FilterOption(
-                durationConstraint: DurationConstraint(
-                  max: Duration(minutes: 1),
+          pickerConfig: AssetPickerConfig(
+            maxAssets: maxAssetsCount,
+            selectedAssets: assets,
+            requestType: RequestType.video,
+            filterOptions: FilterOptionGroup()
+              ..setOption(
+                AssetType.video,
+                const FilterOption(
+                  durationConstraint: DurationConstraint(
+                    max: Duration(minutes: 1),
+                  ),
                 ),
               ),
-            ),
+          ),
         );
       },
     );
@@ -223,15 +254,20 @@ class PickMethod {
       method: (BuildContext context, List<AssetEntity> assets) {
         return AssetPicker.pickAssets(
           context,
-          maxAssets: maxAssetsCount,
-          selectedAssets: assets,
-          requestType: RequestType.common,
-          specialItemPosition: SpecialItemPosition.prepend,
-          specialItemBuilder: (BuildContext context) {
-            return const Center(
-              child: Text('Custom Widget', textAlign: TextAlign.center),
-            );
-          },
+          pickerConfig: AssetPickerConfig(
+            maxAssets: maxAssetsCount,
+            selectedAssets: assets,
+            specialItemPosition: SpecialItemPosition.prepend,
+            specialItemBuilder: (
+              BuildContext context,
+              AssetPathEntity? path,
+              int length,
+            ) {
+              return const Center(
+                child: Text('Custom Widget', textAlign: TextAlign.center),
+              );
+            },
+          ),
         );
       },
     );
@@ -245,10 +281,11 @@ class PickMethod {
       method: (BuildContext context, List<AssetEntity> assets) {
         return AssetPicker.pickAssets(
           context,
-          maxAssets: maxAssetsCount,
-          selectedAssets: assets,
-          requestType: RequestType.common,
-          specialPickerType: SpecialPickerType.noPreview,
+          pickerConfig: AssetPickerConfig(
+            maxAssets: maxAssetsCount,
+            selectedAssets: assets,
+            specialPickerType: SpecialPickerType.noPreview,
+          ),
         );
       },
     );
@@ -264,13 +301,11 @@ class PickMethod {
       name: 'Keep scroll offset',
       description: 'Pick assets from same scroll position.',
       method: (BuildContext context, List<AssetEntity> assets) async {
-        final PermissionState _ps =
-            await PhotoManager.requestPermissionExtend();
-        if (_ps != PermissionState.authorized &&
-            _ps != PermissionState.limited) {
-          throw StateError('Permission state error with $_ps.');
+        final PermissionState ps = await PhotoManager.requestPermissionExtend();
+        if (ps != PermissionState.authorized && ps != PermissionState.limited) {
+          throw StateError('Permission state error with $ps.');
         }
-        onPermission(_ps);
+        onPermission(ps);
         return AssetPicker.pickAssetsWithDelegate(
           context,
           delegate: delegate(),
@@ -289,9 +324,11 @@ class PickMethod {
       method: (BuildContext context, List<AssetEntity> assets) {
         return AssetPicker.pickAssets(
           context,
-          maxAssets: maxAssetsCount,
-          selectedAssets: assets,
-          textDelegate: EnglishAssetPickerTextDelegate(),
+          pickerConfig: AssetPickerConfig(
+            maxAssets: maxAssetsCount,
+            selectedAssets: assets,
+            textDelegate: const EnglishAssetPickerTextDelegate(),
+          ),
         );
       },
     );
@@ -305,12 +342,14 @@ class PickMethod {
       method: (BuildContext context, List<AssetEntity> assets) {
         return AssetPicker.pickAssets(
           context,
-          maxAssets: maxAssetsCount,
-          selectedAssets: assets,
-          selectPredicate: (BuildContext c, AssetEntity a, bool isSelected) {
-            print('Asset title: ${a.title}');
-            return a.title?.endsWith('.gif') != true;
-          },
+          pickerConfig: AssetPickerConfig(
+            maxAssets: maxAssetsCount,
+            selectedAssets: assets,
+            selectPredicate: (BuildContext c, AssetEntity a, bool isSelected) {
+              debugPrint('Asset title: ${a.title}');
+              return a.title?.endsWith('.gif') != true;
+            },
+          ),
         );
       },
     );
@@ -324,11 +363,13 @@ class PickMethod {
       method: (BuildContext context, List<AssetEntity> assets) {
         return AssetPicker.pickAssets(
           context,
-          maxAssets: maxAssetsCount,
-          selectedAssets: assets,
-          pickerTheme: AssetPicker.themeData(
-            Colors.lightBlueAccent,
-            light: true,
+          pickerConfig: AssetPickerConfig(
+            maxAssets: maxAssetsCount,
+            selectedAssets: assets,
+            pickerTheme: AssetPicker.themeData(
+              Colors.lightBlueAccent,
+              light: true,
+            ),
           ),
         );
       },

@@ -1,12 +1,14 @@
-///
-/// [Author] Alex (https://github.com/Alex525)
-/// [Date] 2020/4/7 10:25
-///
+// Copyright 2019 The FlutterCandies author. All rights reserved.
+// Use of this source code is governed by an Apache license that can be found
+// in the LICENSE file.
+
+import 'dart:io' show Platform;
+
 import 'package:flutter/rendering.dart';
 import 'package:photo_manager/photo_manager.dart' show AssetType;
 
 /// All text delegates.
-final List<AssetPickerTextDelegate> assetPickerTextDelegates =
+const List<AssetPickerTextDelegate> assetPickerTextDelegates =
     <AssetPickerTextDelegate>[
   AssetPickerTextDelegate(),
   EnglishAssetPickerTextDelegate(),
@@ -21,7 +23,7 @@ final List<AssetPickerTextDelegate> assetPickerTextDelegates =
 /// Obtain the text delegate from the given locale.
 AssetPickerTextDelegate assetPickerTextDelegateFromLocale(Locale? locale) {
   if (locale == null) {
-    return AssetPickerTextDelegate();
+    return const AssetPickerTextDelegate();
   }
   final String languageCode = locale.languageCode.toLowerCase();
   for (final AssetPickerTextDelegate delegate in assetPickerTextDelegates) {
@@ -29,12 +31,14 @@ AssetPickerTextDelegate assetPickerTextDelegateFromLocale(Locale? locale) {
       return delegate;
     }
   }
-  return AssetPickerTextDelegate();
+  return const AssetPickerTextDelegate();
 }
 
 /// Text delegate that controls text in widgets.
 /// 控制部件中的文字实现
 class AssetPickerTextDelegate {
+  const AssetPickerTextDelegate();
+
   String get languageCode => 'zh';
 
   /// Confirm string for the confirm button.
@@ -112,7 +116,6 @@ class AssetPickerTextDelegate {
   ///
   /// Fields below are only for semantics usage. For customizable these fields,
   /// head over to [EnglishAssetPickerTextDelegate] for fields understanding.
-
   String get sTypeAudioLabel => '音频';
 
   String get sTypeImageLabel => '图片';
@@ -147,11 +150,24 @@ class AssetPickerTextDelegate {
   String get sNameDurationLabel => '时长';
 
   String get sUnitAssetCountLabel => '数量';
+
+  /// Fallback delegate for semantics determined by platform.
+  ///
+  /// The purpose of this field is to provide a fallback delegate references
+  /// when a language does not supported by Talkback or VoiceOver. Set this to
+  /// another text delegate makes screen readers read accordingly.
+  ///
+  /// See also:
+  ///  * Talkback: https://support.google.com/accessibility/android/answer/11101402)
+  ///  * VoiceOver: https://support.apple.com/en-us/HT206175
+  AssetPickerTextDelegate get semanticsTextDelegate => this;
 }
 
 /// [AssetPickerTextDelegate] implements with English.
 /// English Localization
 class EnglishAssetPickerTextDelegate extends AssetPickerTextDelegate {
+  const EnglishAssetPickerTextDelegate();
+
   @override
   String get languageCode => 'en';
 
@@ -246,6 +262,8 @@ class EnglishAssetPickerTextDelegate extends AssetPickerTextDelegate {
 /// [AssetPickerTextDelegate] implements with Hebrew.
 /// תרגום בשפה העברית
 class HebrewAssetPickerTextDelegate extends AssetPickerTextDelegate {
+  const HebrewAssetPickerTextDelegate();
+
   @override
   String get languageCode => 'he';
 
@@ -302,44 +320,53 @@ class HebrewAssetPickerTextDelegate extends AssetPickerTextDelegate {
   @override
   String get accessiblePathName => 'קבצים נגישים';
 
-  // Using English for semantics usage, since Hebrew is not supported for TalkBack.
   @override
-  String get sTypeAudioLabel => 'Audio';
+  String get sTypeAudioLabel => 'שמע';
 
   @override
-  String get sTypeImageLabel => 'Image';
+  String get sTypeImageLabel => 'תמונה';
 
   @override
-  String get sTypeVideoLabel => 'Video';
+  String get sTypeVideoLabel => 'סרטון';
 
   @override
-  String get sTypeOtherLabel => 'Other asset';
+  String get sTypeOtherLabel => 'קובץ אחר';
 
   @override
-  String get sActionPlayHint => 'play';
+  String get sActionPlayHint => 'נגן';
 
   @override
-  String get sActionPreviewHint => 'preview';
+  String get sActionPreviewHint => 'תצוגה מקדימה';
 
   @override
-  String get sActionSelectHint => 'select';
+  String get sActionSelectHint => 'בחר';
 
   @override
-  String get sActionSwitchPathLabel => 'switch path';
+  String get sActionSwitchPathLabel => 'החלף תיקייה';
 
   @override
-  String get sActionUseCameraHint => 'use camera';
+  String get sActionUseCameraHint => 'השתמש במצלמה';
 
   @override
-  String get sNameDurationLabel => 'duration';
+  String get sNameDurationLabel => 'משך';
 
   @override
-  String get sUnitAssetCountLabel => 'count';
+  String get sUnitAssetCountLabel => 'כמות';
+
+  @override
+  AssetPickerTextDelegate get semanticsTextDelegate {
+    if (Platform.isAndroid) {
+      return const EnglishAssetPickerTextDelegate();
+    }
+    return this;
+  }
 }
 
 /// [AssetPickerTextDelegate] implementiert mit der deutschen Übersetzung.
 /// Deutsche Textimplementierung.
 class GermanAssetPickerTextDelegate extends AssetPickerTextDelegate {
+  const GermanAssetPickerTextDelegate();
+
   @override
   String get languageCode => 'de';
 
@@ -432,6 +459,8 @@ class GermanAssetPickerTextDelegate extends AssetPickerTextDelegate {
 /// [AssetPickerTextDelegate] implements with Russian.
 /// Локализация на русский язык.
 class RussianAssetPickerTextDelegate extends AssetPickerTextDelegate {
+  const RussianAssetPickerTextDelegate();
+
   @override
   String get languageCode => 'ru';
 
@@ -527,11 +556,13 @@ class RussianAssetPickerTextDelegate extends AssetPickerTextDelegate {
 /// [AssetPickerTextDelegate] implements with Japanese.
 /// 日本語の TextDelegate
 class JapaneseAssetPickerTextDelegate extends AssetPickerTextDelegate {
+  const JapaneseAssetPickerTextDelegate();
+
   @override
   String get languageCode => 'ja';
 
   @override
-  String get confirm => '決定';
+  String get confirm => '確認';
 
   @override
   String get cancel => 'キャンセル';
@@ -540,10 +571,10 @@ class JapaneseAssetPickerTextDelegate extends AssetPickerTextDelegate {
   String get edit => '編集';
 
   @override
-  String get gifIndicator => 'GIF';
+  String get gifIndicator => 'GIF画像';
 
   @override
-  String get loadFailed => '読み込みに失敗しました。';
+  String get loadFailed => '読み込みに失敗しました';
 
   @override
   String get original => '元の画像';
@@ -555,25 +586,25 @@ class JapaneseAssetPickerTextDelegate extends AssetPickerTextDelegate {
   String get select => '選択';
 
   @override
-  String get emptyList => '空リスト';
+  String get emptyList => 'リストが空です';
 
   @override
-  String get unSupportedAssetType => 'HEIC フォーマットはサポートしていません。';
+  String get unSupportedAssetType => '未対応のフォーマット';
 
   @override
-  String get unableToAccessAll => 'すべてのリソースにアクセスできない';
+  String get unableToAccessAll => 'すべてのリソースへのアクセスができない';
 
   @override
-  String get viewingLimitedAssetsTip => 'このアプリは一部のリソース及'
-      'びアルバムのみにアクセスできる';
+  String get viewingLimitedAssetsTip => 'アプリは一部のリソースと'
+      '写真にしかアクセスできない';
 
   @override
-  String get changeAccessibleLimitedAssets => 'アクセスできるリソースを設置';
+  String get changeAccessibleLimitedAssets => 'アクセスできるリソースを設定する';
 
   @override
-  String get accessAllTip => 'アプリがデバイスの一部のリソースの'
-      'みにアクセスするように設定され、'
-      '「すべてのリソースへ」にアクセスする権限を許可してください';
+  String get accessAllTip => 'アプリがデバイスのリソースの一部にのみ'
+      'アクセスするように設定されています。'
+      '「すべてのリソース」へのアクセスを許可することを推奨します';
 
   @override
   String get goToSystemSettings => '「システム設定」に移動';
@@ -583,11 +614,46 @@ class JapaneseAssetPickerTextDelegate extends AssetPickerTextDelegate {
 
   @override
   String get accessiblePathName => 'アクセスできるリソース';
+
+  @override
+  String get sTypeAudioLabel => 'オーディオ';
+
+  @override
+  String get sTypeImageLabel => '画像';
+
+  @override
+  String get sTypeVideoLabel => '動画';
+
+  @override
+  String get sTypeOtherLabel => 'その他のリソース';
+
+  @override
+  String get sActionPlayHint => '再生';
+
+  @override
+  String get sActionPreviewHint => 'プレビュー';
+
+  @override
+  String get sActionSelectHint => '選択';
+
+  @override
+  String get sActionSwitchPathLabel => 'パス切り替え';
+
+  @override
+  String get sActionUseCameraHint => 'カメラを使う';
+
+  @override
+  String get sNameDurationLabel => '動画の時間';
+
+  @override
+  String get sUnitAssetCountLabel => '数';
 }
 
 /// [AssetPickerTextDelegate] implements with Arabic.
 /// الترجمة العربية
 class ArabicAssetPickerTextDelegate extends AssetPickerTextDelegate {
+  const ArabicAssetPickerTextDelegate();
+
   @override
   String get languageCode => 'ar';
 
@@ -683,6 +749,8 @@ class ArabicAssetPickerTextDelegate extends AssetPickerTextDelegate {
 /// [AssetPickerTextDelegate] implements with French.
 /// Délégué texte français
 class FrenchAssetPickerTextDelegate extends AssetPickerTextDelegate {
+  const FrenchAssetPickerTextDelegate();
+
   @override
   String get languageCode => 'fr';
 
@@ -711,11 +779,14 @@ class FrenchAssetPickerTextDelegate extends AssetPickerTextDelegate {
   String get select => 'Choisir';
 
   @override
+  String get emptyList => 'Liste vide';
+
+  @override
   String get unSupportedAssetType => 'Type de fichier non supporté';
 
   @override
   String get unableToAccessAll =>
-      'Impossible d\'accéder aux médias de votre appareil';
+      "Impossible d'accéder aux médias de votre appareil";
 
   @override
   String get viewingLimitedAssetsTip =>
@@ -741,5 +812,35 @@ class FrenchAssetPickerTextDelegate extends AssetPickerTextDelegate {
   String get accessiblePathName => 'Medias accessible';
 
   @override
-  String get emptyList => 'Liste vide';
+  String get sTypeAudioLabel => "l'audio";
+
+  @override
+  String get sTypeImageLabel => 'image';
+
+  @override
+  String get sTypeVideoLabel => 'vidéo';
+
+  @override
+  String get sTypeOtherLabel => 'Autre';
+
+  @override
+  String get sActionPlayHint => 'jouer';
+
+  @override
+  String get sActionPreviewHint => 'aperçu';
+
+  @override
+  String get sActionSelectHint => 'choisir';
+
+  @override
+  String get sActionSwitchPathLabel => 'changer le dossier';
+
+  @override
+  String get sActionUseCameraHint => 'Utiliser la Caméra';
+
+  @override
+  String get sNameDurationLabel => 'durée';
+
+  @override
+  String get sUnitAssetCountLabel => 'quantité';
 }

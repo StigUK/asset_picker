@@ -1,14 +1,15 @@
-///
-/// [Author] Alex (https://github.com/Alex525)
-/// [Date] 2020/3/31 16:27
-///
+// Copyright 2019 The FlutterCandies author. All rights reserved.
+// Use of this source code is governed by an Apache license that can be found
+// in the LICENSE file.
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 
+import '../constants/constants.dart';
 import '../constants/enums.dart';
-import '../delegates/asset_picker_builder_delegate.dart';
+import '../constants/typedefs.dart';
 import '../delegates/asset_picker_viewer_builder_delegate.dart';
 import '../provider/asset_picker_provider.dart';
 import '../provider/asset_picker_viewer_provider.dart';
@@ -16,9 +17,9 @@ import 'asset_picker.dart';
 
 class AssetPickerViewer<Asset, Path> extends StatefulWidget {
   const AssetPickerViewer({
-    Key? key,
+    super.key,
     required this.builder,
-  }) : super(key: key);
+  });
 
   final AssetPickerViewerBuilderDelegate<Asset, Path> builder;
 
@@ -34,7 +35,7 @@ class AssetPickerViewer<Asset, Path> extends StatefulWidget {
     required List<AssetEntity> previewAssets,
     required ThemeData themeData,
     DefaultAssetPickerProvider? selectorProvider,
-    List<int>? previewThumbSize,
+    ThumbnailSize? previewThumbnailSize,
     List<AssetEntity>? selectedAssets,
     SpecialPickerType? specialPickerType,
     int? maxAssets,
@@ -47,10 +48,15 @@ class AssetPickerViewer<Asset, Path> extends StatefulWidget {
         currentIndex: currentIndex,
         previewAssets: previewAssets,
         provider: selectedAssets != null
-            ? AssetPickerViewerProvider<AssetEntity>(selectedAssets)
+            ? AssetPickerViewerProvider<AssetEntity>(
+                selectedAssets,
+                maxAssets: maxAssets ??
+                    selectorProvider?.maxAssets ??
+                    defaultMaxAssetsCount,
+              )
             : null,
         themeData: themeData,
-        previewThumbSize: previewThumbSize,
+        previewThumbnailSize: previewThumbnailSize,
         specialPickerType: specialPickerType,
         selectedAssets: selectedAssets,
         selectorProvider: selectorProvider,

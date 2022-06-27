@@ -1,36 +1,36 @@
-///
-/// [Author] Alex (https://github.com/AlexV525)
-/// [Date] 2021/7/23 16:07
-///
+// Copyright 2019 The FlutterCandies author. All rights reserved.
+// Use of this source code is governed by an Apache license that can be found
+// in the LICENSE file.
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 import '../../constants/extensions.dart';
+import '../../internal/methods.dart';
 import '../scale_text.dart';
 
 class LocallyAvailableBuilder extends StatefulWidget {
   const LocallyAvailableBuilder({
-    Key? key,
+    super.key,
     required this.asset,
     required this.builder,
     this.isOriginal = true,
-  }) : super(key: key);
+  });
 
   final AssetEntity asset;
   final Widget Function(BuildContext context, AssetEntity asset) builder;
   final bool isOriginal;
 
   @override
-  _LocallyAvailableBuilderState createState() =>
+  State<LocallyAvailableBuilder> createState() =>
       _LocallyAvailableBuilderState();
 }
 
 class _LocallyAvailableBuilderState extends State<LocallyAvailableBuilder> {
   bool _isLocallyAvailable = false;
   PMProgressHandler? _progressHandler;
-  File? file;
 
   @override
   void initState() {
@@ -39,24 +39,34 @@ class _LocallyAvailableBuilderState extends State<LocallyAvailableBuilder> {
   }
 
   Future<void> _checkLocallyAvailable() async {
-    _isLocallyAvailable = await widget.asset.isLocallyAvailable;
+    _isLocallyAvailable = await widget.asset.isLocallyAvailable(
+      isOrigin: widget.isOriginal,
+    );
     if (!mounted) {
       return;
     }
     setState(() {});
     if (!_isLocallyAvailable) {
       _progressHandler = PMProgressHandler();
-      widget.asset
-          .loadFile(
-            progressHandler: _progressHandler,
-            isOrigin: widget.isOriginal,
-          )
-          .then((File? f) => file = f);
+      Future<void>(() async {
+        final File? file = await widget.asset.loadFile(
+          isOrigin: widget.isOriginal,
+          withSubtype: true,
+          progressHandler: _progressHandler,
+        );
+        realDebugPrint('Produced file: $file.');
+        if (file != null) {
+          _isLocallyAvailable = true;
+          if (mounted) {
+            setState(() {});
+          }
+        }
+      });
     }
     _progressHandler?.stream.listen((PMProgressState s) {
+      realDebugPrint('Handling progress: $s.');
       if (s.state == PMRequestState.success) {
         _isLocallyAvailable = true;
-        file = null;
         if (mounted) {
           setState(() {});
         }

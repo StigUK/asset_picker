@@ -1,13 +1,15 @@
-///
-/// [Author] Alex (https://github.com/Alex525)
-/// [Date] 2020/3/31 15:28
-///
+// Copyright 2019 The FlutterCandies author. All rights reserved.
+// Use of this source code is governed by an Apache license that can be found
+// in the LICENSE file.
+
 import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:provider/provider.dart';
 
+import '../constants/constants.dart';
 import '../delegates/sort_path_delegate.dart';
 import '../internal/singleton.dart';
 
@@ -15,16 +17,17 @@ import '../internal/singleton.dart';
 ///
 /// The provider maintain all methods that control assets and paths.
 /// By extending it you can customize how you can get all assets or paths,
-/// how to fetch the next page of assets, how to get the thumb data of a path.
+/// how to fetch the next page of assets,
+/// and how to get the thumbnail data of a path.
 abstract class AssetPickerProvider<Asset, Path> extends ChangeNotifier {
   AssetPickerProvider({
-    this.maxAssets = 9,
-    this.pageSize = 320,
-    this.pathThumbSize = 80,
+    this.maxAssets = defaultMaxAssetsCount,
+    this.pageSize = defaultAssetsPerPage,
+    this.pathThumbnailSize = defaultPathThumbnailSize,
     List<Asset>? selectedAssets,
   }) {
-    if (selectedAssets?.isNotEmpty == true) {
-      _selectedAssets = List<Asset>.from(selectedAssets!);
+    if (selectedAssets != null && selectedAssets.isNotEmpty) {
+      _selectedAssets = selectedAssets.toList();
     }
   }
 
@@ -38,9 +41,9 @@ abstract class AssetPickerProvider<Asset, Path> extends ChangeNotifier {
   /// Use `null` to display all assets into a single grid.
   final int pageSize;
 
-  /// Thumb size for path selector.
+  /// Thumbnail size for path selector.
   /// 路径选择器中缩略图的大小
-  final int pathThumbSize;
+  final ThumbnailSize pathThumbnailSize;
 
   /// Clear all fields when dispose.
   /// 销毁时重置所有内容
@@ -125,8 +128,9 @@ abstract class AssetPickerProvider<Asset, Path> extends ChangeNotifier {
   /// Map for all path entity.
   /// 所有包含资源的路径里列表
   ///
-  /// Using [Map] in order to save the thumb data for the first asset under the path.
-  /// 使用[Map]来保存路径下第一个资源的缩略图数据
+  /// Using [Map] in order to save the thumbnail data
+  /// for the first asset under the path.
+  /// 使用 [Map] 来保存路径下第一个资源的缩略图数据
   Map<Path, Uint8List?> get pathsList => _pathsList;
   final Map<Path, Uint8List?> _pathsList = <Path, Uint8List?>{};
 
@@ -152,7 +156,7 @@ abstract class AssetPickerProvider<Asset, Path> extends ChangeNotifier {
   Path? _currentPath;
 
   set currentPath(Path? value) {
-    if (value == null || value == _currentPath) {
+    if (value == _currentPath) {
       return;
     }
     _currentPath = value;
@@ -168,7 +172,7 @@ abstract class AssetPickerProvider<Asset, Path> extends ChangeNotifier {
     if (value == _currentAssets) {
       return;
     }
-    _currentAssets = List<Asset>.from(value);
+    _currentAssets = value.toList();
     notifyListeners();
   }
 
@@ -181,7 +185,7 @@ abstract class AssetPickerProvider<Asset, Path> extends ChangeNotifier {
     if (value == _selectedAssets) {
       return;
     }
-    _selectedAssets = List<Asset>.from(value);
+    _selectedAssets = value.toList();
     notifyListeners();
   }
 
@@ -208,45 +212,50 @@ abstract class AssetPickerProvider<Asset, Path> extends ChangeNotifier {
     if (selectedAssets.length == maxAssets || selectedAssets.contains(item)) {
       return;
     }
-    final List<Asset> _set = List<Asset>.from(selectedAssets);
-    _set.add(item);
-    selectedAssets = _set;
+    final List<Asset> set = selectedAssets.toList();
+    set.add(item);
+    selectedAssets = set;
   }
 
   /// Un-select asset.
   /// 取消选中资源
   void unSelectAsset(Asset item) {
-    final List<Asset> _set = List<Asset>.from(selectedAssets);
-    _set.remove(item);
-    selectedAssets = _set;
+    final List<Asset> set = selectedAssets.toList();
+    set.remove(item);
+    selectedAssets = set;
   }
 }
 
 class DefaultAssetPickerProvider
     extends AssetPickerProvider<AssetEntity, AssetPathEntity> {
   DefaultAssetPickerProvider({
-    List<AssetEntity>? selectedAssets,
+    super.selectedAssets,
+    super.maxAssets,
+    super.pageSize,
+    super.pathThumbnailSize,
     this.requestType = RequestType.image,
     this.sortPathDelegate = SortPathDelegate.common,
     this.filterOptions,
-    int maxAssets = 9,
-    int pageSize = 80,
-    int pathThumbSize = 80,
-    Duration routeDuration = const Duration(milliseconds: 300),
-  }) : super(
-          maxAssets: maxAssets,
-          pageSize: pageSize,
-          pathThumbSize: pathThumbSize,
-          selectedAssets: selectedAssets,
-        ) {
+  }) {
     Singleton.sortPathDelegate = sortPathDelegate ?? SortPathDelegate.common;
     // Call [getAssetList] with route duration when constructing.
-    Future<void>.delayed(routeDuration).then(
-      (dynamic _) async {
-        await getPaths();
-        await getAssetsFromCurrentPath();
-      },
-    );
+    Future<void>(() async {
+      await getPaths();
+      await getAssetsFromCurrentPath();
+    });
+  }
+
+  @visibleForTesting
+  DefaultAssetPickerProvider.forTest({
+    super.selectedAssets,
+    this.requestType = RequestType.image,
+    this.sortPathDelegate = SortPathDelegate.common,
+    this.filterOptions,
+    super.maxAssets,
+    super.pageSize = 80,
+    super.pathThumbnailSize,
+  }) {
+    Singleton.sortPathDelegate = sortPathDelegate ?? SortPathDelegate.common;
   }
 
   /// Request assets type.
@@ -263,6 +272,30 @@ class DefaultAssetPickerProvider
   /// Will be merged into the base configuration.
   /// 将会与基础条件进行合并。
   final FilterOptionGroup? filterOptions;
+
+  @override
+  set currentPath(AssetPathEntity? value) {
+    if (value == _currentPath) {
+      return;
+    }
+    _currentPath = value;
+    if (value != null &&
+        _pathsList.keys.any((AssetPathEntity p) => p.id == value.id)) {
+      final AssetPathEntity previous = _pathsList.keys.singleWhere(
+        (AssetPathEntity p) => p.id == value.id,
+      );
+      final int index = _pathsList.keys.toList().indexOf(previous);
+      final List<MapEntry<AssetPathEntity, Uint8List?>> newEntries =
+          _pathsList.entries.toList()
+            ..removeAt(index)
+            ..insert(index, MapEntry<AssetPathEntity, Uint8List?>(value, null));
+      _pathsList
+        ..clear()
+        ..addEntries(newEntries);
+      getThumbnailFromPath(value);
+    }
+    notifyListeners();
+  }
 
   @override
   Future<void> getPaths() async {
@@ -285,23 +318,18 @@ class DefaultAssetPickerProvider
       options.merge(filterOptions!);
     }
 
-    final List<AssetPathEntity> _list = await PhotoManager.getAssetPathList(
+    final List<AssetPathEntity> list = await PhotoManager.getAssetPathList(
       type: requestType,
       filterOption: options,
     );
 
     // Sort path using sort path delegate.
-    Singleton.sortPathDelegate.sort(_list);
+    Singleton.sortPathDelegate.sort(list);
 
-    for (final AssetPathEntity pathEntity in _list) {
+    for (final AssetPathEntity pathEntity in list) {
       // Use sync method to avoid unnecessary wait.
       _pathsList[pathEntity] = null;
-      if (requestType != RequestType.audio) {
-        getThumbnailFromPath(pathEntity).then((Uint8List? data) {
-          _pathsList[pathEntity] = data;
-          notifyListeners();
-        });
-      }
+      getThumbnailFromPath(pathEntity);
     }
 
     // Set first path entity as current path entity.
@@ -316,7 +344,7 @@ class DefaultAssetPickerProvider
       page: page,
       size: pageSize,
     );
-    _currentAssets = List<AssetEntity>.of(list);
+    _currentAssets = list.toList();
     _hasAssetsToDisplay = currentAssets.isNotEmpty;
     notifyListeners();
   }
@@ -327,7 +355,7 @@ class DefaultAssetPickerProvider
       page: currentAssetsListPage,
       size: pageSize,
     );
-    final List<AssetEntity> assets = List<AssetEntity>.of(list);
+    final List<AssetEntity> assets = list.toList();
     if (assets.isNotEmpty && currentAssets.contains(assets[0])) {
       return;
     }
@@ -384,12 +412,26 @@ class DefaultAssetPickerProvider
         return true;
       }(),
     );
-    final AssetEntity asset =
-        (await path.getAssetListRange(start: 0, end: 1)).single;
-    final Uint8List? assetData = await asset.thumbDataWithSize(
-      pathThumbSize,
-      pathThumbSize,
+    if (requestType == RequestType.audio) {
+      return null;
+    }
+    final List<AssetEntity> assets = await path.getAssetListRange(
+      start: 0,
+      end: 1,
     );
+    if (assets.isEmpty) {
+      return null;
+    }
+    final AssetEntity asset = assets.single;
+    // Obtain the thumbnail only when the asset is image or video.
+    if (asset.type != AssetType.image && asset.type != AssetType.video) {
+      return null;
+    }
+    final Uint8List? assetData = await asset.thumbnailDataWithSize(
+      pathThumbnailSize,
+    );
+    _pathsList[path] = assetData;
+    notifyListeners();
     return assetData;
   }
 
@@ -397,7 +439,6 @@ class DefaultAssetPickerProvider
   /// 从当前已选路径获取资源列表
   Future<void> getAssetsFromCurrentPath() async {
     if (_pathsList.isNotEmpty) {
-      _currentPath = _pathsList.keys.elementAt(0);
       totalAssetsCount = currentPath!.assetCount;
       await getAssetsFromPath(0, currentPath!);
     } else {

@@ -1,7 +1,7 @@
-///
-/// [Author] Alex (https://github.com/Alex525)
-/// [Date] 2020/5/21 14:18
-///
+// Copyright 2019 The FlutterCandies author. All rights reserved.
+// Use of this source code is governed by an Apache license that can be found
+// in the LICENSE file.
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -14,7 +14,7 @@ import '../../internal/singleton.dart';
 import '../scale_text.dart';
 
 class AudioPageBuilder extends StatefulWidget {
-  const AudioPageBuilder({Key? key, required this.asset}) : super(key: key);
+  const AudioPageBuilder({super.key, required this.asset});
 
   /// Asset currently displayed.
   /// 展示的资源
@@ -139,18 +139,23 @@ class _AudioPageBuilderState extends State<AudioPageBuilder> {
   /// Duration indicator for the audio.
   /// 音频的时长指示器
   Widget get durationIndicator {
+    final String Function(Duration) durationBuilder =
+        Singleton.textDelegate.durationIndicatorBuilder;
+    final String Function(Duration) semanticsDurationBuilder =
+        Singleton.textDelegate.semanticsTextDelegate.durationIndicatorBuilder;
     return StreamBuilder<Duration>(
       initialData: Duration.zero,
       stream: durationStreamController.stream,
       builder: (BuildContext _, AsyncSnapshot<Duration> data) {
         return ScaleText(
-          '${Singleton.textDelegate.durationIndicatorBuilder(data.data!)}'
-          ' / '
-          '${Singleton.textDelegate.durationIndicatorBuilder(assetDuration)}',
+          '${durationBuilder(data.data!)} / ${durationBuilder(assetDuration)}',
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.normal,
           ),
+          semanticsLabel: '${semanticsDurationBuilder(data.data!)}'
+              ' / '
+              '${semanticsDurationBuilder(assetDuration)}',
         );
       },
     );
@@ -160,7 +165,8 @@ class _AudioPageBuilderState extends State<AudioPageBuilder> {
   Widget build(BuildContext context) {
     return Semantics(
       onLongPress: playButtonCallback,
-      onLongPressHint: Singleton.textDelegate.sActionPlayHint,
+      onLongPressHint:
+          Singleton.textDelegate.semanticsTextDelegate.sActionPlayHint,
       child: ColoredBox(
         color: context.themeData.backgroundColor,
         child: isLoaded

@@ -1,23 +1,23 @@
-///
-/// [Author] Alex (https://github.com/AlexV525)
-/// [Date] 2021/7/13 11:00
-///
+// Copyright 2019 The FlutterCandies author. All rights reserved.
+// Use of this source code is governed by an Apache license that can be found
+// in the LICENSE file.
+
 import 'package:flutter/material.dart';
 
 import '../constants/picker_method.dart';
 
 class MethodListView extends StatefulWidget {
   const MethodListView({
-    Key? key,
+    super.key,
     required this.pickMethods,
     required this.onSelectMethod,
-  }) : super(key: key);
+  });
 
   final List<PickMethod> pickMethods;
   final void Function(PickMethod method) onSelectMethod;
 
   @override
-  _MethodListViewState createState() => _MethodListViewState();
+  State<MethodListView> createState() => _MethodListViewState();
 }
 
 class _MethodListViewState extends State<MethodListView> {
@@ -42,7 +42,7 @@ class _MethodListViewState extends State<MethodListView> {
               child: Center(
                 child: Text(
                   model.icon,
-                  style: const TextStyle(fontSize: 24.0),
+                  style: const TextStyle(fontSize: 28.0),
                 ),
               ),
             ),
@@ -84,7 +84,7 @@ class _MethodListViewState extends State<MethodListView> {
       ).copyWith(bottom: 10.0),
       child: Scrollbar(
         controller: _controller,
-        isAlwaysShown: true,
+        thumbVisibility: true,
         radius: const Radius.circular(999),
         child: ListView.builder(
           controller: _controller,

@@ -1,7 +1,7 @@
-///
-/// [Author] Alex (https://github.com/AlexV525)
-/// [Date] 2020/8/19 10:36
-///
+// Copyright 2019 The FlutterCandies author. All rights reserved.
+// Use of this source code is governed by an Apache license that can be found
+// in the LICENSE file.
+
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -10,14 +10,14 @@ import 'package:flutter/material.dart';
 /// Progress Indicator. Used in loading data.
 class PlatformProgressIndicator extends StatelessWidget {
   const PlatformProgressIndicator({
-    Key? key,
+    super.key,
     this.strokeWidth = 4.0,
     this.radius = 10.0,
     this.size = 48.0,
     this.color,
     this.value,
     this.brightness,
-  }) : super(key: key);
+  });
 
   final double strokeWidth;
   final double radius;
