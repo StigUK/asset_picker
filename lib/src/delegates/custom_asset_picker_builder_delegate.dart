@@ -266,10 +266,7 @@ class CustomAssetPickerBuilderDelegate
       // - On iOS, show if no preview and multi asset mode. This is because for iOS
       //   the [bottomActionBar] has the confirm button, but if no preview,
       //   [bottomActionBar] is not displayed.
-      actions: (!isAppleOS || !isPreviewEnabled) &&
-              (isPreviewEnabled || !isSingleAssetMode)
-          ? <Widget>[confirmButton(context)]
-          : null,
+      actions: _appBarActions(context),
       actionsPadding: const EdgeInsetsDirectional.only(end: 14),
       blurRadius: isAppleOS ? appleOSBlurRadius : 0,
     );
@@ -508,7 +505,7 @@ class CustomAssetPickerBuilderDelegate
             return Directionality(
               textDirection: effectiveGridDirection(context),
               child: ColoredBox(
-                color: theme.canvasColor,
+                color: Colors.black,
                 child: Selector<DefaultAssetPickerProvider, List<AssetEntity>>(
                   selector: (_, DefaultAssetPickerProvider p) =>
                       p.currentAssets,
@@ -522,8 +519,7 @@ class CustomAssetPickerBuilderDelegate
                       anchor: effectiveShouldRevertGrid ? anchor : 0,
                       center: effectiveShouldRevertGrid ? gridRevertKey : null,
                       slivers: <Widget>[
-                        if (isAppleOS)
-                          SliverGap.v(context.topPadding + kToolbarHeight),
+                        if (isAppleOS) _buildIosSliverGap(topPadding),
                         _sliverGrid(_, assets),
                         // Ignore the gap when the [anchor] is not equal to 1.
                         if (effectiveShouldRevertGrid && anchor == 1) bottomGap,
@@ -552,12 +548,6 @@ class CustomAssetPickerBuilderDelegate
   ///  * Load more assets when the index reached at third line counting
   ///    backwards.
   ///
-  /// 资源构建有几个条件：
-  ///  * 根据资源类型返回对应类型的构建：
-  ///    * [AssetType.audio] -> [audioItemBuilder] 音频类型
-  ///    * [AssetType.image], [AssetType.video] -> [imageAndVideoItemBuilder]
-  ///      图片和视频类型
-  ///  * 在索引到达倒数第三列的时候加载更多资源。
   @override
   Widget assetGridItemBuilder(
     BuildContext context,
@@ -619,7 +609,7 @@ class CustomAssetPickerBuilderDelegate
         selectedBackdrop(context, currentIndex, asset),
         if (!isWeChatMoment || asset.type != AssetType.video)
           selectIndicator(context, index, asset),
-        itemBannedIndicator(context, asset),
+        //itemBannedIndicator(context, asset),
       ],
     );
     return assetGridItemSemanticsBuilder(context, index, asset, content);
@@ -740,7 +730,6 @@ class CustomAssetPickerBuilderDelegate
     }
 
     // Return actual length if the current path is all.
-    // 如果当前目录是全部内容，则返回实际的内容数量。
     if (currentPathEntity?.isAll != true) {
       return length;
     }
@@ -818,7 +807,6 @@ class CustomAssetPickerBuilderDelegate
 
   /// It'll pop with [AssetPickerProvider.selectedAssets]
   /// when there are any assets were chosen.
-  /// 当有资源已选时，点击按钮将把已选资源通过路由返回。
   @override
   Widget confirmButton(BuildContext context) {
     return Consumer<DefaultAssetPickerProvider>(
@@ -971,7 +959,7 @@ class CustomAssetPickerBuilderDelegate
                     maxHeight:
                         context.mediaQuery.size.height * (isAppleOS ? .6 : .8),
                   ),
-                  color: theme.colorScheme.background,
+                  color: pickerTheme?.backgroundColor,
                   child: child,
                 ),
               ),
@@ -1026,16 +1014,19 @@ class CustomAssetPickerBuilderDelegate
                     padding: const EdgeInsetsDirectional.only(top: 1),
                     shrinkWrap: true,
                     itemCount: p.pathsList.length,
-                    itemBuilder: (BuildContext c, int i) => pathEntityWidget(
-                      context: c,
-                      list: p.pathsList,
-                      index: i,
-                      isAudio: p.requestType == RequestType.audio,
+                    itemBuilder: (BuildContext c, int i) => Container(
+                      color: pickerTheme?.backgroundColor,
+                      child: pathEntityWidget(
+                        context: c,
+                        list: p.pathsList,
+                        index: i,
+                        isAudio: p.requestType == RequestType.audio,
+                      ),
                     ),
                     separatorBuilder: (_, __) => Container(
                       margin: const EdgeInsetsDirectional.only(start: 60),
                       height: 1,
-                      color: theme.canvasColor,
+                      color: Colors.white24,
                     ),
                   );
                 },
@@ -1121,7 +1112,7 @@ class CustomAssetPickerBuilderDelegate
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: theme.iconTheme.color!.withOpacity(0.5),
+                  color: theme.iconTheme.color,
                 ),
                 child: ValueListenableBuilder<bool>(
                   valueListenable: isSwitchingPath,
@@ -1131,10 +1122,10 @@ class CustomAssetPickerBuilderDelegate
                       child: w,
                     );
                   },
-                  child: Icon(
+                  child: const Icon(
                     Icons.keyboard_arrow_down,
                     size: 20,
-                    color: theme.colorScheme.primary,
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -1166,9 +1157,6 @@ class CustomAssetPickerBuilderDelegate
       // The reason that the `thumbData` should be checked at here to see if it
       // is null is that even the image file is not exist, the `File` can still
       // returned as it exist, which will cause the thumb bytes return null.
-      //
-      // 此处需要检查缩略图为空的原因是：尽管文件可能已经被删除，
-      // 但通过 `File` 读取的文件对象仍然存在，使得返回的数据为空。
       if (data != null) {
         return Image.memory(data, fit: BoxFit.cover);
       }
@@ -1381,8 +1369,13 @@ class CustomAssetPickerBuilderDelegate
             child: AnimatedSwitcher(
               duration: duration,
               reverseDuration: duration,
-              child:
-                  selected ? const Icon(Icons.check) : const SizedBox.shrink(),
+              child: selected
+                  ? const Icon(
+                      Icons.check,
+                      size: 18,
+                      color: Colors.white,
+                    )
+                  : const Offstage(),
             ),
           ),
         );
@@ -1460,9 +1453,6 @@ class CustomAssetPickerBuilderDelegate
   /// Videos often contains various of color in the cover,
   /// so in order to keep the content visible in most cases,
   /// the color of the indicator has been set to [Colors.white].
-  ///
-  /// 视频封面通常包含各种颜色，为了保证内容在一般情况下可见，此处
-  /// 将指示器的图标和文字设置为 [Colors.white]。
   @override
   Widget videoIndicator(BuildContext context, AssetEntity asset) {
     return PositionedDirectional(
@@ -1528,23 +1518,32 @@ class CustomAssetPickerBuilderDelegate
         data: theme,
         child: CNP<DefaultAssetPickerProvider>.value(
           value: provider,
-          builder: (BuildContext context, _) => Material(
-            color: theme.canvasColor,
-            child: Stack(
-              fit: StackFit.expand,
-              children: <Widget>[
-                if (isAppleOS)
-                  appleOSLayout(context)
-                else
-                  androidLayout(context),
-                if (Platform.isIOS) iOSPermissionOverlay(context),
-              ],
-            ),
+          builder: (BuildContext context, _) => Stack(
+            fit: StackFit.expand,
+            children: <Widget>[
+              if (isAppleOS)
+                appleOSLayout(context)
+              else
+                androidLayout(context),
+              if (Platform.isIOS) iOSPermissionOverlay(context),
+            ],
           ),
         ),
       ),
     );
   }
+
+  Widget _showMoreOptionsButton() => Selector<DefaultAssetPickerProvider, bool>(
+      selector: (_, DefaultAssetPickerProvider p) => p.showMoreOptions,
+      builder: (BuildContext context, bool showUsedAssetsCheckbox, __) {
+        return IconButton(
+          onPressed: provider.onShowMoreOptions,
+          splashRadius: 30,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(maxWidth: 20),
+          icon: const Icon(Icons.menu),
+        );
+      });
 
   Widget _moreOptionsRowWidget(BuildContext context) =>
       Selector<DefaultAssetPickerProvider, bool>(
@@ -1577,8 +1576,7 @@ class CustomAssetPickerBuilderDelegate
                         return CupertinoSwitch(
                           onChanged: provider.onHideUsedAssets,
                           value: hideUsed,
-                          activeColor:
-                              pickerTheme?.colorScheme.secondary,
+                          activeColor: pickerTheme?.colorScheme.secondary,
                         );
                       }),
                 ],
@@ -1587,4 +1585,34 @@ class CustomAssetPickerBuilderDelegate
           );
         },
       );
+
+  Widget _buildIosSliverGap(double topPadding) =>
+      Selector<DefaultAssetPickerProvider, bool>(
+          selector: (_, DefaultAssetPickerProvider provider) =>
+              provider.showMoreOptions,
+          builder: (_, bool showMoreOptions, __) {
+            if (showMoreOptions) {
+              return SliverGap.v(topPadding + _moreOptionsHeight);
+            }
+            return SliverGap.v(topPadding);
+          });
+
+  List<Widget>? _appBarActions(BuildContext context) {
+    if (isAppleOS) {
+      return <Widget>[
+        _showMoreOptionsButton(),
+      ];
+    }
+    if ((!isAppleOS || !isPreviewEnabled) &&
+        (isPreviewEnabled || !isSingleAssetMode)) {
+      return <Widget>[
+        confirmButton(context),
+        const SizedBox(
+          width: 10,
+        ),
+        _showMoreOptionsButton(),
+      ];
+    }
+    return null;
+  }
 }
