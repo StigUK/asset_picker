@@ -277,8 +277,6 @@ class DefaultAssetPickerProvider
   /// 将会与基础条件进行合并。
   final FilterOptionGroup? filterOptions;
 
-  final List<String>? usedAssets;
-
   @override
   set currentPath(AssetPathEntity? value) {
     if (value == _currentPath) {
@@ -316,6 +314,19 @@ class DefaultAssetPickerProvider
   bool get hideUsed => _hideUsed;
 
   bool _hideUsed = false;
+
+  final List<String>? usedAssets;
+
+  bool _showMoreOptions = false;
+
+  set showMoreOptions(bool value) {
+    if (value != _showMoreOptions) {
+      _showMoreOptions = value;
+      notifyListeners();
+    }
+  }
+
+  bool get showMoreOptions => _showMoreOptions;
 
   @override
   Future<void> getPaths() async {
@@ -484,5 +495,9 @@ class DefaultAssetPickerProvider
   Future<void> onHideUsedAssets(bool value) async {
     _hideUsed = value;
     return switchPath(currentPath);
+  }
+
+  void onShowMoreOptions() {
+    showMoreOptions = !showMoreOptions;
   }
 }
