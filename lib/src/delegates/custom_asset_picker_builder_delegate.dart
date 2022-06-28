@@ -30,8 +30,6 @@ class CustomAssetPickerBuilderDelegate
     required this.provider,
     required super.initialPermission,
     required this.onHideUsedPicturesString,
-    required this.accentColor,
-    required this.backgroundColor,
     super.gridCount,
     super.pickerTheme,
     super.specialItemPosition,
@@ -105,10 +103,6 @@ class CustomAssetPickerBuilderDelegate
   bool get isSingleAssetMode => provider.maxAssets == 1;
 
   final String onHideUsedPicturesString;
-
-  final Color backgroundColor;
-
-  final Color accentColor;
 
   static const double _moreOptionsHeight = 46;
 
@@ -1561,8 +1555,8 @@ class CustomAssetPickerBuilderDelegate
             duration: const Duration(milliseconds: 100),
             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
             color: isAppleOS
-                ? pickerTheme?.backgroundColor.withOpacity(0.9)
-                : pickerTheme?.backgroundColor,
+                ? pickerTheme?.primaryColor.withOpacity(0.9)
+                : pickerTheme?.primaryColor,
             height: showMoreOptions ? _moreOptionsHeight : 0,
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 50),
@@ -1584,7 +1578,7 @@ class CustomAssetPickerBuilderDelegate
                           onChanged: provider.onHideUsedAssets,
                           value: hideUsed,
                           activeColor:
-                              pickerTheme?.backgroundColor ?? Colors.black,
+                              pickerTheme?.colorScheme.secondary,
                         );
                       }),
                 ],
