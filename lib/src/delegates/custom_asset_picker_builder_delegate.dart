@@ -30,6 +30,7 @@ class CustomAssetPickerBuilderDelegate
     required this.provider,
     required super.initialPermission,
     required this.onHideUsedPicturesString,
+    required this.hideUsedTextStyle,
     super.gridCount,
     super.pickerTheme,
     super.specialItemPosition,
@@ -103,6 +104,8 @@ class CustomAssetPickerBuilderDelegate
   bool get isSingleAssetMode => provider.maxAssets == 1;
 
   final String onHideUsedPicturesString;
+
+  final TextStyle hideUsedTextStyle;
 
   static const double _moreOptionsHeight = 46;
 
@@ -1518,15 +1521,18 @@ class CustomAssetPickerBuilderDelegate
         data: theme,
         child: CNP<DefaultAssetPickerProvider>.value(
           value: provider,
-          builder: (BuildContext context, _) => Stack(
-            fit: StackFit.expand,
-            children: <Widget>[
-              if (isAppleOS)
-                appleOSLayout(context)
-              else
-                androidLayout(context),
-              if (Platform.isIOS) iOSPermissionOverlay(context),
-            ],
+          builder: (BuildContext context, _) => Material(
+            color: theme.canvasColor,
+            child: Stack(
+              fit: StackFit.expand,
+              children: <Widget>[
+                if (isAppleOS)
+                  appleOSLayout(context)
+                else
+                  androidLayout(context),
+                if (Platform.isIOS) iOSPermissionOverlay(context),
+              ],
+            ),
           ),
         ),
       ),
@@ -1564,7 +1570,7 @@ class CustomAssetPickerBuilderDelegate
                 children: <Widget>[
                   Text(
                     onHideUsedPicturesString,
-                    style: pickerTheme?.textTheme.bodyText1,
+                    style: hideUsedTextStyle,
                   ),
                   const SizedBox(
                     width: 5,
