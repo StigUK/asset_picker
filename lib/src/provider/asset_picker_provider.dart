@@ -238,6 +238,7 @@ class DefaultAssetPickerProvider
     this.sortPathsByModifiedDate = false,
     this.filterOptions,
     this.usedAssets,
+    Duration initializeDelayDuration = const Duration(milliseconds: 250),
   }) {
     Singleton.sortPathDelegate = sortPathDelegate ?? SortPathDelegate.common;
     // Call [getAssetList] with route duration when constructing.
