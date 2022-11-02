@@ -237,10 +237,11 @@ class DefaultAssetPickerProvider
     this.sortPathDelegate = SortPathDelegate.common,
     this.sortPathsByModifiedDate = false,
     this.filterOptions,
-    Duration initializeDelayDuration = const Duration(milliseconds: 250),
+    this.usedAssets,
   }) {
     Singleton.sortPathDelegate = sortPathDelegate ?? SortPathDelegate.common;
     // Call [getAssetList] with route duration when constructing.
+    showUsedAssetsCheckbox = usedAssets != null;
     Future<void>.delayed(initializeDelayDuration, () async {
       await getPaths();
       await getAssetsFromCurrentPath();
@@ -254,11 +255,13 @@ class DefaultAssetPickerProvider
     this.sortPathDelegate = SortPathDelegate.common,
     this.sortPathsByModifiedDate = false,
     this.filterOptions,
+    this.usedAssets,
     super.maxAssets,
     super.pageSize = 80,
     super.pathThumbnailSize,
   }) {
     Singleton.sortPathDelegate = sortPathDelegate ?? SortPathDelegate.common;
+    showUsedAssetsCheckbox = usedAssets != null;
   }
 
   /// Request assets type.
@@ -295,6 +298,33 @@ class DefaultAssetPickerProvider
     }
     notifyListeners();
   }
+
+  ///Hide user assets
+  set hideUsed(bool value) {
+    if (value != _hideUsed) {
+      _hideUsed = value;
+      notifyListeners();
+    }
+  }
+
+  bool showUsedAssetsCheckbox = false;
+
+  bool get hideUsed => _hideUsed;
+
+  bool _hideUsed = false;
+
+  final List<String>? usedAssets;
+
+  bool _showMoreOptions = false;
+
+  set showMoreOptions(bool value) {
+    if (value != _showMoreOptions) {
+      _showMoreOptions = value;
+      notifyListeners();
+    }
+  }
+
+  bool get showMoreOptions => _showMoreOptions;
 
   @override
   Future<void> getPaths() async {
@@ -361,6 +391,7 @@ class DefaultAssetPickerProvider
     } else {
       _currentAssets.addAll(list);
     }
+    _currentAssets = _filterAssets(_currentAssets);
     _hasAssetsToDisplay = currentAssets.isNotEmpty;
     notifyListeners();
   }
@@ -462,5 +493,29 @@ class DefaultAssetPickerProvider
       currentPath = _currentPath!.copyWith(assetCount: assetCount);
     }
     await getAssetsFromPath(0, currentPath!.path);
+  }
+
+  List<AssetEntity> _filterAssets(List<AssetEntity> list) {
+    if (hideUsed && usedAssets != null && usedAssets!.isNotEmpty) {
+      list.removeWhere(
+        (AssetEntity element) =>
+            element.relativePath == '/' ||
+            usedAssets!.any((String element2) => element2 == element.id),
+      );
+    } else {
+      list.removeWhere(
+        (AssetEntity element) => element.relativePath == '/',
+      );
+    }
+    return list;
+  }
+
+  Future<void> onHideUsedAssets(bool value) async {
+    _hideUsed = value;
+    return switchPath(currentPath);
+  }
+
+  void onShowMoreOptions() {
+    showMoreOptions = !showMoreOptions;
   }
 }
