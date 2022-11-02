@@ -55,36 +55,26 @@ class CustomAssetPickerBuilderDelegate
   }
 
   /// [ChangeNotifier] for asset picker.
-  /// 资源选择器状态保持
   final DefaultAssetPickerProvider provider;
 
   /// Thumbnail size in the grid.
-  /// 预览时网络的缩略图大小
   ///
   /// This only works on images and videos since other types does not have to
   /// request for the thumbnail data. The preview can speed up by reducing it.
-  /// 该参数仅生效于图片和视频类型的资源，因为其他资源不需要请求缩略图数据。
-  /// 预览图片的速度可以通过适当降低它的数值来提升。
   ///
   /// This cannot be `null` or a large value since you shouldn't use the
   /// original data for the grid.
-  /// 该值不能为空或者非常大，因为在网格中使用原数据不是一个好的决定。
   final ThumbnailSize gridThumbnailSize;
 
   /// Preview thumbnail size in the viewer.
-  /// 预览时图片的缩略图大小
   ///
   /// This only works on images and videos since other types does not have to
   /// request for the thumbnail data. The preview can speed up by reducing it.
-  /// 该参数仅生效于图片和视频类型的资源，因为其他资源不需要请求缩略图数据。
-  /// 预览图片的速度可以通过适当降低它的数值来提升。
   ///
   /// Default is `null`, which will request the origin data.
-  /// 默认为空，即读取原图。
   final ThumbnailSize? previewThumbnailSize;
 
   /// The current special picker type for the picker.
-  /// 当前特殊选择类型
   ///
   /// Several types which are special:
   /// * [SpecialPickerType.wechatMoment] When user selected video, no more images
@@ -92,30 +82,22 @@ class CustomAssetPickerBuilderDelegate
   /// * [SpecialPickerType.noPreview] Disable preview of asset; Clicking on an
   /// asset selects it.
   ///
-  /// 这里包含一些特殊选择类型：
-  /// * [SpecialPickerType.wechatMoment] 微信朋友圈模式。当用户选择了视频，将不能选择图片。
-  /// * [SpecialPickerType.noPreview] 禁用资源预览。多选时单击资产将直接选中，单选时选中并返回。
   final SpecialPickerType? specialPickerType;
 
   /// Whether the picker should save the scroll offset between pushes and pops.
-  /// 选择器是否可以从同样的位置开始选择
   final bool keepScrollOffset;
 
   /// [Duration] when triggering path switching.
-  /// 切换路径时的动画时长
   Duration get switchingPathDuration => const Duration(milliseconds: 300);
 
   /// [Curve] when triggering path switching.
-  /// 切换路径时的动画曲线
   Curve get switchingPathCurve => Curves.easeInOutQuad;
 
   /// Whether the [SpecialPickerType.wechatMoment] is enabled.
-  /// 当前是否为微信朋友圈选择模式
   bool get isWeChatMoment =>
       specialPickerType == SpecialPickerType.wechatMoment;
 
   /// Whether the preview of assets is enabled.
-  /// 资源的预览是否启用
   bool get isPreviewEnabled => specialPickerType != SpecialPickerType.noPreview;
 
   @override
@@ -129,7 +111,6 @@ class CustomAssetPickerBuilderDelegate
 
   /// The listener to track the scroll position of the [gridScrollController]
   /// if [keepScrollOffset] is true.
-  /// 当 [keepScrollOffset] 为 true 时，跟踪 [gridScrollController] 位置的监听。
   void keepScrollOffsetListener() {
     if (gridScrollController.hasClients) {
       Singleton.scrollPosition = gridScrollController.position;
@@ -137,7 +118,6 @@ class CustomAssetPickerBuilderDelegate
   }
 
   /// Be aware that the method will do nothing when [keepScrollOffset] is true.
-  /// 注意当 [keepScrollOffset] 为 true 时方法不会进行释放。
   @override
   void dispose() {
     // Skip delegate's dispose when it's keeping scroll offset.
@@ -589,12 +569,6 @@ class CustomAssetPickerBuilderDelegate
   ///  * Load more assets when the index reached at third line counting
   ///    backwards.
   ///
-  /// 资源构建有几个条件：
-  ///  * 根据资源类型返回对应类型的构建：
-  ///    * [AssetType.audio] -> [audioItemBuilder] 音频类型
-  ///    * [AssetType.image], [AssetType.video] -> [imageAndVideoItemBuilder]
-  ///      图片和视频类型
-  ///  * 在索引到达倒数第三列的时候加载更多资源。
   @override
   Widget assetGridItemBuilder(
       BuildContext context,
@@ -857,7 +831,6 @@ class CustomAssetPickerBuilderDelegate
 
   /// It'll pop with [AssetPickerProvider.selectedAssets]
   /// when there are any assets were chosen.
-  /// 当有资源已选时，点击按钮将把已选资源通过路由返回。
   @override
   Widget confirmButton(BuildContext context) {
     return Consumer<DefaultAssetPickerProvider>(
@@ -934,8 +907,6 @@ class CustomAssetPickerBuilderDelegate
 
   /// While the picker is switching path, this will displayed.
   /// If the user tapped on it, it'll collapse the list widget.
-  ///
-  /// 当选择器正在选择路径时，它会出现。用户点击它时，列表会折叠收起。
   @override
   Widget pathEntityListBackdrop(BuildContext context) {
     return ValueListenableBuilder<bool>(
@@ -1487,9 +1458,6 @@ class CustomAssetPickerBuilderDelegate
   /// Videos often contains various of color in the cover,
   /// so in order to keep the content visible in most cases,
   /// the color of the indicator has been set to [Colors.white].
-  ///
-  /// 视频封面通常包含各种颜色，为了保证内容在一般情况下可见，此处
-  /// 将指示器的图标和文字设置为 [Colors.white]。
   @override
   Widget videoIndicator(BuildContext context, AssetEntity asset) {
     return PositionedDirectional(
