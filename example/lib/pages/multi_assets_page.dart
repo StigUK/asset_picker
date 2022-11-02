@@ -1,7 +1,7 @@
-///
-/// [Author] Alex (https://github.com/Alex525)
-/// [Date] 2020-05-31 20:21
-///
+// Copyright 2019 The FlutterCandies author. All rights reserved.
+// Use of this source code is governed by an Apache license that can be found
+// in the LICENSE file.
+
 import 'package:flutter/material.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
@@ -9,8 +9,10 @@ import '../constants/page_mixin.dart';
 import '../constants/picker_method.dart';
 
 class MultiAssetsPage extends StatefulWidget {
+  const MultiAssetsPage({super.key});
+
   @override
-  _MultiAssetsPageState createState() => _MultiAssetsPageState();
+  State<MultiAssetsPage> createState() => _MultiAssetsPageState();
 }
 
 class _MultiAssetsPageState extends State<MultiAssetsPage>
@@ -42,13 +44,16 @@ class _MultiAssetsPageState extends State<MultiAssetsPage>
         method: (BuildContext context, List<AssetEntity> assets) {
           return AssetPicker.pickAssets(
             context,
-            maxAssets: maxAssetsCount,
-            specialPickerType: SpecialPickerType.wechatMoment,
+            pickerConfig: AssetPickerConfig(
+              maxAssets: maxAssetsCount,
+              specialPickerType: SpecialPickerType.wechatMoment,
+            ),
           );
         },
       ),
       PickMethod.noPreview(maxAssetsCount),
       PickMethod.customizableTheme(maxAssetsCount),
+      PickMethod.pathNameBuilder(maxAssetsCount),
       PickMethod.customFilterOptions(maxAssetsCount),
       PickMethod.preventGIFPicked(maxAssetsCount),
       PickMethod.keepScrollOffset(
@@ -77,11 +82,13 @@ class _MultiAssetsPageState extends State<MultiAssetsPage>
         method: (BuildContext context, List<AssetEntity> assets) {
           return AssetPicker.pickAssets(
             context,
-            maxAssets: maxAssetsCount,
-            selectedAssets: assets,
-            requestType: RequestType.image,
-            previewThumbSize: const <int>[150, 150],
-            gridThumbSize: 80,
+            pickerConfig: AssetPickerConfig(
+              maxAssets: maxAssetsCount,
+              selectedAssets: assets,
+              requestType: RequestType.image,
+              gridThumbnailSize: const ThumbnailSize.square(80),
+              previewThumbnailSize: const ThumbnailSize.square(150),
+            ),
           );
         },
       ),

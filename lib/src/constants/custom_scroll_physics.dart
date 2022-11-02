@@ -1,14 +1,14 @@
-///
-/// [Author] Alex (https://github.com/Alex525)
-/// [Date] 2020/3/31 17:34
-///
+// Copyright 2019 The FlutterCandies author. All rights reserved.
+// Use of this source code is governed by an Apache license that can be found
+// in the LICENSE file.
+
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/physics.dart';
+import 'package:flutter/physics.dart' as physics show SpringDescription;
 
 class CustomBouncingScrollPhysics extends BouncingScrollPhysics {
   const CustomBouncingScrollPhysics({
-    ScrollPhysics? parent,
-  }) : super(parent: parent);
+    super.parent,
+  });
 
   @override
   CustomBouncingScrollPhysics applyTo(ScrollPhysics? ancestor) {
@@ -16,8 +16,8 @@ class CustomBouncingScrollPhysics extends BouncingScrollPhysics {
   }
 
   @override
-  SpringDescription get spring {
-    return SpringDescription.withDampingRatio(
+  physics.SpringDescription get spring {
+    return physics.SpringDescription.withDampingRatio(
       mass: 0.5,
       stiffness: 400.0,
       ratio: 1.1,
@@ -27,8 +27,8 @@ class CustomBouncingScrollPhysics extends BouncingScrollPhysics {
 
 class CustomClampingScrollPhysics extends ClampingScrollPhysics {
   const CustomClampingScrollPhysics({
-    ScrollPhysics? parent,
-  }) : super(parent: parent);
+    super.parent,
+  });
 
   @override
   CustomClampingScrollPhysics applyTo(ScrollPhysics? ancestor) {
@@ -36,8 +36,8 @@ class CustomClampingScrollPhysics extends ClampingScrollPhysics {
   }
 
   @override
-  SpringDescription get spring {
-    return SpringDescription.withDampingRatio(
+  physics.SpringDescription get spring {
+    return physics.SpringDescription.withDampingRatio(
       mass: 0.5,
       stiffness: 400.0,
       ratio: 1.1,

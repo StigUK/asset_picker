@@ -1,7 +1,7 @@
-///
-/// [Author] Alex (https://github.com/Alex525)
-/// [Date] 2020/4/6 18:58
-///
+// Copyright 2019 The FlutterCandies author. All rights reserved.
+// Use of this source code is governed by an Apache license that can be found
+// in the LICENSE file.
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -16,11 +16,11 @@ import 'locally_available_builder.dart';
 
 class VideoPageBuilder extends StatefulWidget {
   const VideoPageBuilder({
-    Key? key,
+    super.key,
     required this.asset,
     required this.delegate,
     this.hasOnlyOneVideoAndMoment = false,
-  }) : super(key: key);
+  });
 
   /// Asset currently displayed.
   /// 展示的资源
@@ -33,7 +33,7 @@ class VideoPageBuilder extends StatefulWidget {
   final bool hasOnlyOneVideoAndMoment;
 
   @override
-  _VideoPageBuilderState createState() => _VideoPageBuilderState();
+  State<VideoPageBuilder> createState() => _VideoPageBuilderState();
 }
 
 class _VideoPageBuilderState extends State<VideoPageBuilder> {
@@ -196,7 +196,13 @@ class _VideoPageBuilderState extends State<VideoPageBuilder> {
       asset: widget.asset,
       builder: (BuildContext context, AssetEntity asset) {
         if (hasErrorWhenInitializing) {
-          return Center(child: ScaleText(Singleton.textDelegate.loadFailed));
+          return Center(
+            child: ScaleText(
+              Singleton.textDelegate.loadFailed,
+              semanticsLabel:
+                  Singleton.textDelegate.semanticsTextDelegate.loadFailed,
+            ),
+          );
         }
         if (!_isLocallyAvailable && !_isInitializing) {
           initializeVideoPlayerController();
@@ -206,7 +212,8 @@ class _VideoPageBuilderState extends State<VideoPageBuilder> {
         }
         return Semantics(
           onLongPress: playButtonCallback,
-          onLongPressHint: Singleton.textDelegate.sActionPlayHint,
+          onLongPressHint:
+              Singleton.textDelegate.semanticsTextDelegate.sActionPlayHint,
           child: GestureDetector(
             onLongPress: MediaQuery.of(context).accessibleNavigation
                 ? playButtonCallback

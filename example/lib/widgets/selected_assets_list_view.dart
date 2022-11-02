@@ -1,7 +1,7 @@
-///
-/// [Author] Alex (https://github.com/AlexV525)
-/// [Date] 2021/7/13 10:51
-///
+// Copyright 2019 The FlutterCandies author. All rights reserved.
+// Use of this source code is governed by an Apache license that can be found
+// in the LICENSE file.
+
 import 'package:flutter/material.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart'
     show AssetEntity, AssetPicker, AssetPickerViewer;
@@ -11,12 +11,12 @@ import 'asset_widget_builder.dart';
 
 class SelectedAssetsListView extends StatelessWidget {
   const SelectedAssetsListView({
-    Key? key,
+    super.key,
     required this.assets,
     required this.isDisplayingDetail,
     required this.onResult,
     required this.onRemoveAsset,
-  }) : super(key: key);
+  });
 
   final List<AssetEntity> assets;
   final ValueNotifier<bool> isDisplayingDetail;

@@ -1,7 +1,7 @@
-///
-/// [Author] Alex (https://github.com/Alex525)
-/// [Date] 2020-05-31 21:36
-///
+// Copyright 2019 The FlutterCandies author. All rights reserved.
+// Use of this source code is governed by an Apache license that can be found
+// in the LICENSE file.
+
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -9,10 +9,10 @@ import '../main.dart';
 import 'home_page.dart';
 
 class SplashPage extends StatefulWidget {
-  const SplashPage();
+  const SplashPage({super.key});
 
   @override
-  _SplashPageState createState() => _SplashPageState();
+  State<SplashPage> createState() => _SplashPageState();
 }
 
 class _SplashPageState extends State<SplashPage> {
@@ -23,9 +23,10 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> init() async {
-    await PackageInfo.fromPlatform()
-        .then((PackageInfo p) => packageVersion = p.version)
-        .catchError((Object _) {});
+    try {
+      final PackageInfo info = await PackageInfo.fromPlatform();
+      packageVersion = info.version;
+    } catch (_) {}
     await Future<void>.delayed(const Duration(seconds: 1));
     if (mounted) {
       Navigator.of(context).pushReplacement(

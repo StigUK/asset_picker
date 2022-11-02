@@ -166,6 +166,33 @@
         "a11y",
         "bug"
       ]
+    },
+    {
+      "login": "paigupai",
+      "name": "paigupai",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44311361?v=4",
+      "profile": "https://github.com/paigupai",
+      "contributions": [
+        "translation"
+      ]
+    },
+    {
+      "login": "taqiabdulaziz",
+      "name": "Muhammad Taqi Abdul Aziz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30410316?v=4",
+      "profile": "http://taqi.me",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "hellohejinyu",
+      "name": "何锦余",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8766034?v=4",
+      "profile": "http://blog.1qa.link",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
