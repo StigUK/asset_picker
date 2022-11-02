@@ -705,7 +705,7 @@ class DefaultAssetPickerViewerBuilderDelegate
       ),
       child: Container(
         padding: EdgeInsetsDirectional.only(top: context.topPadding),
-        color: themeData.canvasColor,
+        color: themeData.backgroundColor,
         child: Row(
           children: <Widget>[
             Expanded(
@@ -906,6 +906,8 @@ class DefaultAssetPickerViewerBuilderDelegate
   ) {
     return Checkbox(
       value: isSelected,
+      fillColor:
+          MaterialStateProperty.all<Color>(themeData.colorScheme.secondary),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(999999),
       ),
@@ -987,7 +989,7 @@ class DefaultAssetPickerViewerBuilderDelegate
                 ? SystemUiOverlayStyle.light
                 : SystemUiOverlayStyle.dark),
         child: Material(
-          color: themeData.colorScheme.onSecondary,
+          color: Colors.black,
           child: Stack(
             children: <Widget>[
               Positioned.fill(child: _pageViewBuilder(context)),
