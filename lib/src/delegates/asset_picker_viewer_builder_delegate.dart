@@ -12,6 +12,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:provider/provider.dart';
+import 'package:wechat_assets_picker/src/widget/platform_progress_indicator.dart';
 
 import '../constants/custom_scroll_physics.dart';
 import '../constants/enums.dart';
@@ -312,7 +313,12 @@ abstract class AssetPickerViewerBuilderDelegate<Asset, Path> {
       case LoadState.failed:
         return failedItemBuilder(context);
       case LoadState.loading:
-        return const SizedBox.shrink();
+        return Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: MediaQuery.of(context).size.width / 2 - 24,
+          ),
+          child: const PlatformProgressIndicator(),
+        );
     }
   }
 
