@@ -1019,7 +1019,6 @@ class DefaultAssetPickerBuilderDelegate
         return Center(child: isAssetsEmpty ? emptyIndicator(context) : w);
       },
       child: PlatformProgressIndicator(
-        color: theme.iconTheme.color,
         size: context.mediaQuery.size.width / gridCount / 3,
       ),
     );
