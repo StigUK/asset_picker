@@ -732,7 +732,7 @@ class DefaultAssetPickerViewerBuilderDelegate
       ),
       child: Container(
         padding: EdgeInsetsDirectional.only(top: context.topPadding),
-        color: themeData.backgroundColor,
+        color: themeData.colorScheme.background,
         child: Row(
           children: <Widget>[
             Expanded(
