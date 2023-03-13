@@ -381,10 +381,10 @@ class DefaultAssetPickerProvider
   @override
   Future<void> getAssetsFromPath([int? page, AssetPathEntity? path]) {
     Future<void> run() async {
-      if (page == 0) {
+      final int currentPage = page ?? currentAssetsListPage;
+      if (currentPage == 0) {
         _filteredUsedLength = 0;
       }
-      final int currentPage = page ?? currentAssetsListPage;
       final AssetPathEntity currentPath = path ?? this.currentPath!.path;
       final List<AssetEntity> list = await currentPath.getAssetListPaged(
         page: currentPage,
