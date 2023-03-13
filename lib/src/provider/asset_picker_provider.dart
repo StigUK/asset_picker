@@ -393,7 +393,7 @@ class DefaultAssetPickerProvider
       if (currentPage == 0) {
         _currentAssets.clear();
       }
-      _currentAssets = _filterAssets(_currentAssets);
+      _currentAssets.addAll(_filterAssets(list));
       _hasAssetsToDisplay = _filteredUsedLength > 0 || currentAssets.isNotEmpty;
       notifyListeners();
     }
