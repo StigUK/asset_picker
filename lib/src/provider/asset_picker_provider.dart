@@ -2,6 +2,7 @@
 // Use of this source code is governed by an Apache license that can be found
 // in the LICENSE file.
 
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -26,7 +27,8 @@ abstract class AssetPickerProvider<Asset, Path> extends ChangeNotifier {
     this.pageSize = defaultAssetsPerPage,
     this.pathThumbnailSize = defaultPathThumbnailSize,
     List<Asset>? selectedAssets,
-  }) {
+  })  : assert(maxAssets > 0, 'maxAssets must be greater than 0.'),
+        assert(pageSize > 0, 'pageSize must be greater than 0.') {
     if (selectedAssets != null && selectedAssets.isNotEmpty) {
       _selectedAssets = selectedAssets.toList();
     }
@@ -133,7 +135,7 @@ abstract class AssetPickerProvider<Asset, Path> extends ChangeNotifier {
   /// for the first asset under the path.
   /// 使用 [Map] 来保存路径下第一个资源的缩略图数据
   List<PathWrapper<Path>> get paths => _paths;
-  final List<PathWrapper<Path>> _paths = <PathWrapper<Path>>[];
+  List<PathWrapper<Path>> _paths = <PathWrapper<Path>>[];
 
   /// Set thumbnail [data] for the specific [path].
   /// 为指定的路径设置缩略图数据
@@ -341,6 +343,8 @@ class DefaultAssetPickerProvider
         sizeConstraint: SizeConstraint(ignoreSize: true),
       ),
       containsPathModified: sortPathsByModifiedDate,
+      createTimeCond: DateTimeCond.def().copyWith(ignore: true),
+      updateTimeCond: DateTimeCond.def().copyWith(ignore: true),
     );
 
     // Merge user's filter option into base options if it's not null.
@@ -353,19 +357,9 @@ class DefaultAssetPickerProvider
       filterOption: options,
     );
 
-    for (final AssetPathEntity pathEntity in list) {
-      final int index = _paths.indexWhere(
-        (PathWrapper<AssetPathEntity> p) => p.path.id == pathEntity.id,
-      );
-      final PathWrapper<AssetPathEntity> wrapper = PathWrapper<AssetPathEntity>(
-        path: pathEntity,
-      );
-      if (index == -1) {
-        _paths.add(wrapper);
-      } else {
-        _paths[index] = wrapper;
-      }
-    }
+    _paths = list
+        .map((AssetPathEntity p) => PathWrapper<AssetPathEntity>(path: p))
+        .toList();
     // Sort path using sort path delegate.
     Singleton.sortPathDelegate.sort(_paths);
     // Use sync method to avoid unnecessary wait.
@@ -379,22 +373,36 @@ class DefaultAssetPickerProvider
     }
   }
 
+  Completer<void>? _getAssetsFromPathCompleter;
+
   @override
-  Future<void> getAssetsFromPath([int? page, AssetPathEntity? path]) async {
-    page ??= currentAssetsListPage;
-    path ??= currentPath!.path;
-    final List<AssetEntity> list = await path.getAssetListPaged(
-      page: page,
-      size: pageSize,
-    );
-    if (page == 0) {
-      _currentAssets = list;
-    } else {
-      _currentAssets.addAll(list);
+  Future<void> getAssetsFromPath([int? page, AssetPathEntity? path]) {
+    Future<void> run() async {
+      final int currentPage = page ?? currentAssetsListPage;
+      final AssetPathEntity currentPath = path ?? this.currentPath!.path;
+      final List<AssetEntity> list = await currentPath.getAssetListPaged(
+        page: currentPage,
+        size: pageSize,
+      );
+      if (currentPage == 0) {
+        _currentAssets.clear();
+      }
+      _currentAssets = _filterAssets(_currentAssets);
+      _hasAssetsToDisplay = currentAssets.isNotEmpty;
+      notifyListeners();
     }
-    _currentAssets = _filterAssets(_currentAssets);
-    _hasAssetsToDisplay = currentAssets.isNotEmpty;
-    notifyListeners();
+
+    if (_getAssetsFromPathCompleter == null) {
+      _getAssetsFromPathCompleter = Completer<void>();
+      run().then((_) {
+        _getAssetsFromPathCompleter!.complete();
+      }).catchError((Object e, StackTrace s) {
+        _getAssetsFromPathCompleter!.completeError(e, s);
+      }).whenComplete(() {
+        _getAssetsFromPathCompleter = null;
+      });
+    }
+    return _getAssetsFromPathCompleter!.future;
   }
 
   @override
