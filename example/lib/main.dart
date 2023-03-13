@@ -21,6 +21,8 @@ void main() {
     SystemUiOverlayStyle.dark.copyWith(statusBarColor: Colors.transparent),
   );
   AssetPicker.registerObserve();
+  // Enables logging with the photo_manager.
+  PhotoManager.setLog(true);
 }
 
 class MyApp extends StatelessWidget {
@@ -57,10 +59,10 @@ class NoGlowScrollBehavior extends ScrollBehavior {
   const NoGlowScrollBehavior();
 
   @override
-  Widget buildViewportChrome(
+  Widget buildOverscrollIndicator(
     BuildContext context,
     Widget child,
-    AxisDirection axisDirection,
+    ScrollableDetails details,
   ) =>
       child;
 }

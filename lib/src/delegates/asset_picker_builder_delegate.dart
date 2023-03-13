@@ -52,7 +52,8 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
     Color? themeColor,
     AssetPickerTextDelegate? textDelegate,
     Locale? locale,
-  })  : assert(
+  })  : assert(gridCount > 0, 'gridCount must be greater than 0.'),
+        assert(
           pickerTheme == null || themeColor == null,
           'Theme and theme color cannot be set at the same time.',
         ),
@@ -226,11 +227,19 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
   /// to involve with predications, callbacks, etc.
   /// 选择资源的方法。自定义的 delegate 可以通过实现该方法，整合判断、回调等操作。
   @protected
-  void selectAsset(BuildContext context, Asset asset, bool selected);
+  void selectAsset(BuildContext context, Asset asset, int index, bool selected);
 
   /// Called when assets changed and obtained notifications from the OS.
   /// 系统发出资源变更的通知时调用的方法
   Future<void> onAssetsChanged(MethodCall call, StateSetter setState) async {}
+
+  /// Determine how to browse assets in the viewer.
+  /// 定义如何在查看器中浏览资源
+  Future<void> viewAsset(
+    BuildContext context,
+    int index,
+    AssetEntity currentAsset,
+  );
 
   /// Yes, the build method.
   /// 没错，是它是它就是它，我们亲爱的 build 方法~
@@ -395,7 +404,7 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
             textDelegate.gifIndicator,
             style: TextStyle(
               color: isAppleOS
-                  ? theme.textTheme.bodyText2?.color
+                  ? theme.textTheme.bodyMedium?.color
                   : theme.primaryColor,
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -485,7 +494,7 @@ abstract class AssetPickerBuilderDelegate<Asset, Path> {
             Expanded(
               child: ScaleText(
                 textDelegate.accessAllTip,
-                style: context.themeData.textTheme.caption?.copyWith(
+                style: context.themeData.textTheme.bodySmall?.copyWith(
                   fontSize: 14,
                 ),
                 semanticsLabel: semanticsTextDelegate.accessAllTip,
@@ -762,6 +771,7 @@ class DefaultAssetPickerBuilderDelegate
   Future<void> selectAsset(
     BuildContext context,
     AssetEntity asset,
+    int index,
     bool selected,
   ) async {
     final bool? selectPredicateResult = await selectPredicate?.call(
@@ -792,7 +802,7 @@ class DefaultAssetPickerBuilderDelegate
     if (!isPermissionLimited) {
       return;
     }
-    final PathWrapper<AssetPathEntity>? currentWrapper = provider.currentPath;
+    isSwitchingPath.value = false;
     if (call.arguments is Map) {
       final Map<dynamic, dynamic> arguments =
           call.arguments as Map<dynamic, dynamic>;
@@ -800,43 +810,59 @@ class DefaultAssetPickerBuilderDelegate
         provider
           ..currentAssets = <AssetEntity>[]
           ..currentPath = null
+          ..selectedAssets = <AssetEntity>[]
           ..hasAssetsToDisplay = false
-          ..isAssetsEmpty = true;
+          ..isAssetsEmpty = true
+          ..totalAssetsCount = 0
+          ..paths.clear();
         return;
       }
-      if (currentWrapper == null) {
-        await provider.getPaths();
-      }
     }
+    await provider.getPaths();
+    provider.currentPath = provider.paths.first;
+    final PathWrapper<AssetPathEntity>? currentWrapper = provider.currentPath;
     if (currentWrapper != null) {
       final AssetPathEntity newPath =
           await currentWrapper.path.obtainForNewProperties();
       final int assetCount = await newPath.assetCountAsync;
+      final PathWrapper<AssetPathEntity> newPathWrapper =
+          PathWrapper<AssetPathEntity>(
+        path: newPath,
+        assetCount: assetCount,
+      );
       provider
-        ..currentPath = PathWrapper<AssetPathEntity>(path: newPath)
+        ..currentPath = newPathWrapper
         ..hasAssetsToDisplay = assetCount != 0
         ..isAssetsEmpty = assetCount == 0
-        ..totalAssetsCount = assetCount;
-      isSwitchingPath.value = false;
+        ..totalAssetsCount = assetCount
+        ..getThumbnailFromPath(newPathWrapper);
       if (newPath.isAll) {
         await provider.getAssetsFromCurrentPath();
+        final List<AssetEntity> entitiesShouldBeRemoved = <AssetEntity>[];
+        for (final AssetEntity entity in provider.selectedAssets) {
+          if (!provider.currentAssets.contains(entity)) {
+            entitiesShouldBeRemoved.add(entity);
+          }
+        }
+        entitiesShouldBeRemoved.forEach(provider.selectedAssets.remove);
       }
     }
   }
 
-  Future<void> _pushAssetToViewer(
+  @override
+  Future<void> viewAsset(
     BuildContext context,
     int index,
-    AssetEntity asset,
+    AssetEntity currentAsset,
   ) async {
     final DefaultAssetPickerProvider provider =
         context.read<DefaultAssetPickerProvider>();
     bool selectedAllAndNotSelected() =>
-        !provider.selectedAssets.contains(asset) &&
+        !provider.selectedAssets.contains(currentAsset) &&
         provider.selectedMaximumAssets;
     bool selectedPhotosAndIsVideo() =>
         isWeChatMoment &&
-        asset.type == AssetType.video &&
+        currentAsset.type == AssetType.video &&
         provider.selectedAssets.isNotEmpty;
     // When we reached the maximum select count and the asset
     // is not selected, do nothing.
@@ -850,8 +876,8 @@ class DefaultAssetPickerBuilderDelegate
     final List<AssetEntity>? selected;
     final int effectiveIndex;
     if (isWeChatMoment) {
-      if (asset.type == AssetType.video) {
-        current = <AssetEntity>[asset];
+      if (currentAsset.type == AssetType.video) {
+        current = <AssetEntity>[currentAsset];
         selected = null;
         effectiveIndex = 0;
       } else {
@@ -859,7 +885,7 @@ class DefaultAssetPickerBuilderDelegate
             .where((AssetEntity e) => e.type == AssetType.image)
             .toList();
         selected = provider.selectedAssets;
-        effectiveIndex = current.indexOf(asset);
+        effectiveIndex = current.indexOf(currentAsset);
       }
     } else {
       current = provider.currentAssets;
@@ -952,7 +978,7 @@ class DefaultAssetPickerBuilderDelegate
             child: Stack(
               children: <Widget>[
                 Positioned.fill(child: assetsGridBuilder(context)),
-                if (!isSingleAssetMode || isAppleOS)
+                if (!isSingleAssetMode || isPreviewEnabled)
                   Positioned.fill(
                     top: null,
                     child: bottomActionBar(context),
@@ -1207,11 +1233,10 @@ class DefaultAssetPickerBuilderDelegate
     List<AssetEntity> currentAssets, {
     Widget? specialItem,
   }) {
+    final DefaultAssetPickerProvider p =
+        context.read<DefaultAssetPickerProvider>();
     final int length = currentAssets.length;
-    final PathWrapper<AssetPathEntity>? currentWrapper = context
-        .select<DefaultAssetPickerProvider, PathWrapper<AssetPathEntity>?>(
-      (DefaultAssetPickerProvider p) => p.currentPath,
-    );
+    final PathWrapper<AssetPathEntity>? currentWrapper = p.currentPath;
     final AssetPathEntity? currentPathEntity = currentWrapper?.path;
 
     if (specialItem != null) {
@@ -1234,11 +1259,11 @@ class DefaultAssetPickerBuilderDelegate
       return const SizedBox.shrink();
     }
 
-    final bool hasMoreToLoad = context.select<DefaultAssetPickerProvider, bool>(
-      (DefaultAssetPickerProvider p) => p.hasMoreToLoad,
-    );
-    if (index == length - gridCount * 3 && hasMoreToLoad) {
-      context.read<DefaultAssetPickerProvider>().loadMoreAssets();
+    if (p.hasMoreToLoad) {
+      if ((p.pageSize <= gridCount * 3 && index == length - 1) ||
+          index == length - gridCount * 3) {
+        p.loadMoreAssets();
+      }
     }
 
     final AssetEntity asset = currentAssets.elementAt(currentIndex);
@@ -1319,10 +1344,10 @@ class DefaultAssetPickerBuilderDelegate
               hint: hint,
               image: asset.type == AssetType.image ||
                   asset.type == AssetType.video,
-              onTap: () => selectAsset(context, asset, isSelected),
+              onTap: () => selectAsset(context, asset, index, isSelected),
               onTapHint: semanticsTextDelegate.sActionSelectHint,
               onLongPress: isPreviewEnabled
-                  ? () => _pushAssetToViewer(context, index, asset)
+                  ? () => viewAsset(context, index, asset)
                   : null,
               onLongPressHint: semanticsTextDelegate.sActionPreviewHint,
               selected: isSelected,
@@ -1335,7 +1360,7 @@ class DefaultAssetPickerBuilderDelegate
                 // Regression https://github.com/flutter/flutter/issues/35112.
                 onLongPress:
                     isPreviewEnabled && context.mediaQuery.accessibleNavigation
-                        ? () => _pushAssetToViewer(context, index, asset)
+                        ? () => viewAsset(context, index, asset)
                         : null,
                 child: IndexedSemantics(
                   index: semanticIndex(index),
@@ -1385,7 +1410,7 @@ class DefaultAssetPickerBuilderDelegate
 
     // Return actual length if the current path is all.
     // 如果当前目录是全部内容，则返回实际的内容数量。
-    if (currentPathEntity?.isAll != true) {
+    if (currentPathEntity?.isAll != true && specialItem == null) {
       return length;
     }
     switch (specialItemPosition) {
@@ -1487,8 +1512,8 @@ class DefaultAssetPickerBuilderDelegate
                 : textDelegate.confirm,
             style: TextStyle(
               color: p.isSelectedNotEmpty
-                  ? theme.textTheme.bodyText1?.color
-                  : theme.textTheme.caption?.color,
+                  ? theme.textTheme.bodyLarge?.color
+                  : theme.textTheme.bodySmall?.color,
               fontSize: 17,
               fontWeight: FontWeight.normal,
             ),
@@ -1631,7 +1656,7 @@ class DefaultAssetPickerBuilderDelegate
                       ),
                     ],
                   ),
-                  style: context.themeData.textTheme.caption?.copyWith(
+                  style: context.themeData.textTheme.bodySmall?.copyWith(
                     fontSize: 14,
                   ),
                 ),
@@ -1696,12 +1721,11 @@ class DefaultAssetPickerBuilderDelegate
     return UnconstrainedBox(
       child: GestureDetector(
         onTap: () {
-          if (provider.currentPath == null) {
-            return;
-          }
-          Feedback.forTap(context);
           if (isPermissionLimited && provider.isAssetsEmpty) {
             PhotoManager.presentLimited();
+            return;
+          }
+          if (provider.currentPath == null) {
             return;
           }
           isSwitchingPath.value = !isSwitchingPath.value;
@@ -1863,7 +1887,7 @@ class DefaultAssetPickerBuilderDelegate
                                 ScaleText(
                                   '($semanticsCount)',
                                   style: TextStyle(
-                                    color: theme.textTheme.caption?.color,
+                                    color: theme.textTheme.bodySmall?.color,
                                     fontSize: 17,
                                   ),
                                   maxLines: 1,
@@ -1945,7 +1969,7 @@ class DefaultAssetPickerBuilderDelegate
                 style: TextStyle(
                   color: p.isSelectedNotEmpty
                       ? null
-                      : c.themeData.textTheme.caption?.color,
+                      : c.themeData.textTheme.bodySmall?.color,
                   fontSize: 17,
                 ),
                 maxScaleFactor: 1.2,
@@ -1994,7 +2018,7 @@ class DefaultAssetPickerBuilderDelegate
           decoration: BoxDecoration(
             border: !selected
                 ? Border.all(
-                    color: context.themeData.selectedRowColor,
+                    color: context.themeData.unselectedWidgetColor,
                     width: indicatorSize / 25,
                   )
                 : null,
@@ -2012,7 +2036,7 @@ class DefaultAssetPickerBuilderDelegate
         );
         final Widget selectorWidget = GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: () => selectAsset(context, asset, selected),
+          onTap: () => selectAsset(context, asset, index, selected),
           child: Container(
             margin: EdgeInsets.all(indicatorSize / 4),
             width: isPreviewEnabled ? indicatorSize : null,
@@ -2040,9 +2064,7 @@ class DefaultAssetPickerBuilderDelegate
     final double indicatorSize = context.mediaQuery.size.width / gridCount / 3;
     return Positioned.fill(
       child: GestureDetector(
-        onTap: isPreviewEnabled
-            ? () => _pushAssetToViewer(context, index, asset)
-            : null,
+        onTap: isPreviewEnabled ? () => viewAsset(context, index, asset) : null,
         child: Consumer<DefaultAssetPickerProvider>(
           builder: (_, DefaultAssetPickerProvider p, __) {
             final int index = p.selectedAssets.indexOf(asset);
@@ -2052,7 +2074,7 @@ class DefaultAssetPickerBuilderDelegate
               padding: EdgeInsets.all(indicatorSize * .35),
               color: selected
                   ? theme.colorScheme.primary.withOpacity(.45)
-                  : theme.backgroundColor.withOpacity(.1),
+                  : theme.colorScheme.background.withOpacity(.1),
               child: selected && !isSingleAssetMode
                   ? Align(
                       alignment: AlignmentDirectional.topStart,
@@ -2064,7 +2086,7 @@ class DefaultAssetPickerBuilderDelegate
                           child: Text(
                             '${index + 1}',
                             style: TextStyle(
-                              color: theme.textTheme.bodyText1?.color
+                              color: theme.textTheme.bodyLarge?.color
                                   ?.withOpacity(.75),
                               fontWeight: FontWeight.w600,
                               height: 1,

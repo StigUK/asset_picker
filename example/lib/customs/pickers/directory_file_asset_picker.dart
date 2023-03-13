@@ -388,6 +388,37 @@ class FileAssetPickerBuilder
   @override
   bool get isSingleAssetMode => provider.maxAssets == 1;
 
+  @override
+  Future<void> viewAsset(
+    BuildContext context,
+    int index,
+    AssetEntity currentAsset,
+  ) async {
+    final List<File>? result = await Navigator.of(context).push<List<File>?>(
+      PageRouteBuilder<List<File>>(
+        pageBuilder: (
+          BuildContext context,
+          Animation<double> animation,
+          Animation<double> secondaryAnimation,
+        ) {
+          return AssetPickerViewer<File, Directory>(
+            builder: FileAssetPickerViewerBuilderDelegate(
+              currentIndex: index,
+              previewAssets: provider.selectedAssets,
+              provider: FileAssetPickerViewerProvider(provider.selectedAssets),
+              themeData: AssetPicker.themeData(themeColor),
+              selectedAssets: provider.selectedAssets,
+              selectorProvider: provider,
+            ),
+          );
+        },
+      ),
+    );
+    if (result != null) {
+      Navigator.of(context).maybePop(result);
+    }
+  }
+
   Future<List<File>?> pushToPicker(
     BuildContext context, {
     required int index,
@@ -428,7 +459,7 @@ class FileAssetPickerBuilder
   }
 
   @override
-  void selectAsset(BuildContext context, File asset, bool selected) {
+  void selectAsset(BuildContext context, File asset, int index, bool selected) {
     if (selected) {
       provider.unSelectAsset(asset);
     } else {
@@ -777,8 +808,8 @@ class FileAssetPickerBuilder
                   : textDelegate.confirm,
               style: TextStyle(
                 color: provider.isSelectedNotEmpty
-                    ? theme.textTheme.bodyText1?.color
-                    : theme.textTheme.caption?.color,
+                    ? theme.textTheme.bodyLarge?.color
+                    : theme.textTheme.bodySmall?.color,
                 fontSize: 17.0,
                 fontWeight: FontWeight.normal,
               ),
@@ -1035,7 +1066,7 @@ class FileAssetPickerBuilder
                   style: TextStyle(
                     color: isSelectedNotEmpty
                         ? null
-                        : theme.textTheme.caption?.color,
+                        : theme.textTheme.bodySmall?.color,
                     fontSize: 18.0,
                   ),
                 );
@@ -1098,7 +1129,7 @@ class FileAssetPickerBuilder
                               '${index + 1}',
                               style: TextStyle(
                                 color: isSelected
-                                    ? theme.textTheme.bodyText1?.color
+                                    ? theme.textTheme.bodyLarge?.color
                                     : null,
                                 fontSize: isAppleOS ? 16.0 : 14.0,
                                 fontWeight: isAppleOS
@@ -1462,8 +1493,8 @@ class FileAssetPickerViewerBuilderDelegate
               style: TextStyle(
                 color: () {
                   return provider.isSelectedNotEmpty
-                      ? themeData.textTheme.bodyText1?.color
-                      : themeData.textTheme.caption?.color;
+                      ? themeData.textTheme.bodyLarge?.color
+                      : themeData.textTheme.bodySmall?.color;
                 }(),
                 fontSize: 17.0,
                 fontWeight: FontWeight.normal,

@@ -131,6 +131,7 @@ class CustomAssetPickerBuilderDelegate
   Future<void> selectAsset(
     BuildContext context,
     AssetEntity asset,
+    int index,
     bool selected,
   ) async {
     final bool? selectPredicateResult = await selectPredicate?.call(
@@ -689,7 +690,7 @@ class CustomAssetPickerBuilderDelegate
               hint: hint,
               image: asset.type == AssetType.image ||
                   asset.type == AssetType.video,
-              onTap: () => selectAsset(context, asset, isSelected),
+              onTap: () => selectAsset(context, asset, index, isSelected),
               onTapHint: semanticsTextDelegate.sActionSelectHint,
               onLongPress: isPreviewEnabled
                   ? () => _pushAssetToViewer(context, index, asset)
@@ -856,8 +857,8 @@ class CustomAssetPickerBuilderDelegate
                 : textDelegate.confirm,
             style: TextStyle(
               color: p.isSelectedNotEmpty
-                  ? theme.textTheme.bodyText1?.color
-                  : theme.textTheme.caption?.color,
+                  ? theme.textTheme.bodyLarge?.color
+                  : theme.textTheme.bodySmall?.color,
               fontSize: 17,
               fontWeight: FontWeight.normal,
             ),
@@ -956,7 +957,7 @@ class CustomAssetPickerBuilderDelegate
                     maxHeight:
                         context.mediaQuery.size.height * (isAppleOS ? .6 : .8),
                   ),
-                  color: pickerTheme?.backgroundColor,
+                  color: pickerTheme?.colorScheme.background,
                   child: child,
                 ),
               ),
@@ -998,7 +999,7 @@ class CustomAssetPickerBuilderDelegate
                       ),
                     ],
                   ),
-                  style: context.themeData.textTheme.caption?.copyWith(
+                  style: context.themeData.textTheme.bodySmall?.copyWith(
                     fontSize: 14,
                   ),
                 ),
@@ -1019,7 +1020,7 @@ class CustomAssetPickerBuilderDelegate
                     shrinkWrap: true,
                     itemCount: filtered.length,
                     itemBuilder: (BuildContext c, int i) => Container(
-                      color: pickerTheme?.backgroundColor,
+                      color: pickerTheme?.colorScheme.background,
                       child: pathEntityWidget(
                         context: c,
                         list: filtered,
@@ -1233,7 +1234,7 @@ class CustomAssetPickerBuilderDelegate
                                 ScaleText(
                                   '($semanticsCount)',
                                   style: TextStyle(
-                                    color: theme.textTheme.caption?.color,
+                                    color: theme.textTheme.bodySmall?.color,
                                     fontSize: 17,
                                   ),
                                   maxLines: 1,
@@ -1315,7 +1316,7 @@ class CustomAssetPickerBuilderDelegate
                 style: TextStyle(
                   color: p.isSelectedNotEmpty
                       ? null
-                      : c.themeData.textTheme.caption?.color,
+                      : c.themeData.textTheme.bodySmall?.color,
                   fontSize: 17,
                 ),
                 maxScaleFactor: 1.2,
@@ -1364,7 +1365,7 @@ class CustomAssetPickerBuilderDelegate
           decoration: BoxDecoration(
             border: !selected
                 ? Border.all(
-                    color: context.themeData.selectedRowColor,
+                    color: context.themeData.unselectedWidgetColor,
                     width: indicatorSize / 25,
                   )
                 : null,
@@ -1387,7 +1388,7 @@ class CustomAssetPickerBuilderDelegate
         );
         final Widget selectorWidget = GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: () => selectAsset(context, asset, selected),
+          onTap: () => selectAsset(context, asset, index, selected),
           child: Container(
             margin: EdgeInsets.all(indicatorSize / 4),
             width: isPreviewEnabled ? indicatorSize : null,
@@ -1427,7 +1428,7 @@ class CustomAssetPickerBuilderDelegate
               padding: EdgeInsets.all(indicatorSize * .35),
               color: selected
                   ? theme.colorScheme.primary.withOpacity(.45)
-                  : theme.backgroundColor.withOpacity(.1),
+                  : theme.colorScheme.background.withOpacity(.1),
               child: selected && !isSingleAssetMode
                   ? Align(
                       alignment: AlignmentDirectional.topStart,
@@ -1439,7 +1440,7 @@ class CustomAssetPickerBuilderDelegate
                           child: Text(
                             '${index + 1}',
                             style: TextStyle(
-                              color: theme.textTheme.bodyText1?.color
+                              color: theme.textTheme.bodyLarge?.color
                                   ?.withOpacity(.75),
                               fontWeight: FontWeight.w600,
                               height: 1,
@@ -1628,5 +1629,66 @@ class CustomAssetPickerBuilderDelegate
       ];
     }
     return null;
+  }
+
+  @override
+  Future<void> viewAsset(
+    BuildContext context,
+    int index,
+    AssetEntity currentAsset,
+  ) async {
+    final DefaultAssetPickerProvider provider =
+        context.read<DefaultAssetPickerProvider>();
+    bool selectedAllAndNotSelected() =>
+        !provider.selectedAssets.contains(currentAsset) &&
+        provider.selectedMaximumAssets;
+    bool selectedPhotosAndIsVideo() =>
+        isWeChatMoment &&
+        currentAsset.type == AssetType.video &&
+        provider.selectedAssets.isNotEmpty;
+    // When we reached the maximum select count and the asset
+    // is not selected, do nothing.
+    // When the special type is WeChat Moment, pictures and videos cannot
+    // be selected at the same time. Video select should be banned if any
+    // pictures are selected.
+    if (selectedAllAndNotSelected() || selectedPhotosAndIsVideo()) {
+      return;
+    }
+    final List<AssetEntity> current;
+    final List<AssetEntity>? selected;
+    final int effectiveIndex;
+    if (isWeChatMoment) {
+      if (currentAsset.type == AssetType.video) {
+        current = <AssetEntity>[currentAsset];
+        selected = null;
+        effectiveIndex = 0;
+      } else {
+        current = provider.currentAssets
+            .where((AssetEntity e) => e.type == AssetType.image)
+            .toList();
+        selected = provider.selectedAssets;
+        effectiveIndex = current.indexOf(currentAsset);
+      }
+    } else {
+      current = provider.currentAssets;
+      selected = provider.selectedAssets;
+      effectiveIndex = index;
+    }
+    final List<AssetEntity>? result = await AssetPickerViewer.pushToViewer(
+      context,
+      currentIndex: effectiveIndex,
+      previewAssets: current,
+      themeData: theme,
+      previewThumbnailSize: previewThumbnailSize,
+      selectPredicate: selectPredicate,
+      selectedAssets: selected,
+      selectorProvider: provider,
+      specialPickerType: specialPickerType,
+      maxAssets: provider.maxAssets,
+      shouldReversePreview: isAppleOS,
+    );
+    if (result != null) {
+      Navigator.of(context).maybePop(result);
+    }
   }
 }
