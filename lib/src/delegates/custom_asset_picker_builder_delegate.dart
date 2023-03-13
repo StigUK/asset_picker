@@ -290,7 +290,8 @@ class CustomAssetPickerBuilderDelegate
                       RepaintBoundary(
                         child: Column(
                           children: <Widget>[
-                            _moreOptionsRowWidget(context),
+                            if (p.showUsedAssetsCheckbox)
+                              _moreOptionsRowWidget(context),
                             Expanded(child: assetsGridBuilder(context)),
                             if (!isSingleAssetMode && isPreviewEnabled)
                               bottomActionBar(context),
@@ -346,14 +347,15 @@ class CustomAssetPickerBuilderDelegate
                       _gridLayout(context),
                       pathEntityListBackdrop(context),
                       pathEntityListWidget(context),
-                      Positioned(
-                        top:
-                            kToolbarHeight + MediaQuery.of(context).padding.top,
-                        child: SizedBox(
-                          width: MediaQuery.of(context).size.width,
-                          child: _moreOptionsRowWidget(context),
+                      if (p.showUsedAssetsCheckbox)
+                        Positioned(
+                          top: kToolbarHeight +
+                              MediaQuery.of(context).padding.top,
+                          child: SizedBox(
+                            width: MediaQuery.of(context).size.width,
+                            child: _moreOptionsRowWidget(context),
+                          ),
                         ),
-                      ),
                     ],
                   );
                 } else {
