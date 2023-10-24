@@ -22,10 +22,11 @@ dependencies:
   flutter:
     sdk: flutter
 
-  extended_image: ^8.1.0
-  photo_manager: ^2.7.0
-  provider: ^6.0.5
+  extended_image: 8.1.1
+  photo_manager: 2.7.2
+  provider: 6.0.5
   video_player: ^2.7.0
+  loading_indicator: ^3.1.1
 
 dev_dependencies:
   flutter_lints: any
@@ -33,6 +34,12 @@ dev_dependencies:
     sdk: flutter
   flutter_test:
     sdk: flutter
+
+dependency_overrides:
+  photo_manager:
+    git:
+      url: https://bitbucket.org/memor-i/photo-manager.git
+      ref: 2.8.0
 
 screenshots:
   - description: 'Screenshot 1'
