@@ -123,7 +123,8 @@ abstract class AssetPickerProvider<Asset, Path> extends ChangeNotifier {
 
   /// Whether more assets are waiting for a load.
   /// 是否还有更多资源可以加载
-  bool get hasMoreToLoad => _currentAssets.length < _totalAssetsCount!;
+  bool get hasMoreToLoad =>
+      (_currentAssets.length + _filteredUsedLength) < _totalAssetsCount!;
 
   /// The current page for assets list.
   /// 当前加载的资源列表分页数
@@ -142,6 +143,8 @@ abstract class AssetPickerProvider<Asset, Path> extends ChangeNotifier {
     _totalAssetsCount = value;
     notifyListeners();
   }
+
+  int _filteredUsedLength = 0;
 
   /// List for all path entity wrapped by [PathWrapper].
   /// 所有资源路径的列表，以 [PathWrapper] 包装
@@ -259,10 +262,12 @@ class DefaultAssetPickerProvider
     this.sortPathDelegate = SortPathDelegate.common,
     this.sortPathsByModifiedDate = false,
     this.filterOptions,
+    this.usedAssets,
     Duration initializeDelayDuration = const Duration(milliseconds: 250),
   }) {
     Singleton.sortPathDelegate = sortPathDelegate ?? SortPathDelegate.common;
     // Call [getAssetList] with route duration when constructing.
+    showUsedAssetsCheckbox = usedAssets != null;
     Future<void>.delayed(initializeDelayDuration, () async {
       await getPaths();
       await getAssetsFromCurrentPath();
@@ -276,11 +281,13 @@ class DefaultAssetPickerProvider
     this.sortPathDelegate = SortPathDelegate.common,
     this.sortPathsByModifiedDate = false,
     this.filterOptions,
+    this.usedAssets,
     super.maxAssets,
     super.pageSize = 80,
     super.pathThumbnailSize,
   }) {
     Singleton.sortPathDelegate = sortPathDelegate ?? SortPathDelegate.common;
+    showUsedAssetsCheckbox = usedAssets != null;
   }
 
   /// Request assets type.
@@ -317,6 +324,33 @@ class DefaultAssetPickerProvider
     }
     notifyListeners();
   }
+
+  ///Hide used assets
+  set hideUsed(bool value) {
+    if (value != _hideUsed) {
+      _hideUsed = value;
+      notifyListeners();
+    }
+  }
+
+  bool showUsedAssetsCheckbox = false;
+
+  bool get hideUsed => _hideUsed;
+
+  bool _hideUsed = false;
+
+  final Set<String>? usedAssets;
+
+  bool _showMoreOptions = false;
+
+  set showMoreOptions(bool value) {
+    if (value != _showMoreOptions) {
+      _showMoreOptions = value;
+      notifyListeners();
+    }
+  }
+
+  bool get showMoreOptions => _showMoreOptions;
 
   @override
   Future<void> getPaths() async {
@@ -373,6 +407,9 @@ class DefaultAssetPickerProvider
   Future<void> getAssetsFromPath([int? page, AssetPathEntity? path]) {
     Future<void> run() async {
       final int currentPage = page ?? currentAssetsListPage;
+      if (currentPage == 0) {
+        _filteredUsedLength = 0;
+      }
       final AssetPathEntity currentPath = path ?? this.currentPath!.path;
       final List<AssetEntity> list = await currentPath.getAssetListPaged(
         page: currentPage,
@@ -381,8 +418,8 @@ class DefaultAssetPickerProvider
       if (currentPage == 0) {
         _currentAssets.clear();
       }
-      _currentAssets.addAll(list);
-      _hasAssetsToDisplay = _currentAssets.isNotEmpty;
+      _currentAssets.addAll(_filterAssets(list));
+      _hasAssetsToDisplay = _filteredUsedLength > 0 || currentAssets.isNotEmpty;
       notifyListeners();
     }
 
@@ -512,5 +549,37 @@ class DefaultAssetPickerProvider
       currentPath = _currentPath!.copyWith(assetCount: assetCount);
     }
     await getAssetsFromPath(0, currentPath!.path);
+  }
+
+  List<AssetEntity> _filterAssets(List<AssetEntity> list) {
+    final List<AssetEntity> result = <AssetEntity>[];
+    if (hideUsed && usedAssets != null && usedAssets!.isNotEmpty) {
+      for (final AssetEntity entity in list) {
+        if (entity.relativePath == '/' ||
+            usedAssets!.any((String element) => element == entity.id)) {
+          ++_filteredUsedLength;
+        } else {
+          result.add(entity);
+        }
+      }
+    } else {
+      for (final AssetEntity entity in list) {
+        if (entity.relativePath == '/') {
+          ++_filteredUsedLength;
+        } else {
+          result.add(entity);
+        }
+      }
+    }
+    return result;
+  }
+
+  Future<void> onHideUsedAssets(bool value) async {
+    _hideUsed = value;
+    return switchPath(currentPath);
+  }
+
+  void onShowMoreOptions() {
+    showMoreOptions = !showMoreOptions;
   }
 }

@@ -11,6 +11,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:provider/provider.dart';
+import 'package:wechat_assets_picker/src/widget/platform_progress_indicator.dart';
 
 import '../constants/custom_scroll_physics.dart';
 import '../constants/enums.dart';
@@ -331,7 +332,12 @@ abstract class AssetPickerViewerBuilderDelegate<Asset, Path> {
           ? state.completedWidget
           : FadeImageBuilder(child: state.completedWidget),
       LoadState.failed => failedItemBuilder(context),
-      LoadState.loading => const SizedBox.shrink(),
+      LoadState.loading => Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: MediaQuery.of(context).size.width / 2 - 24,
+        ),
+        child: const PlatformProgressIndicator(),
+      )
     };
   }
 
@@ -706,7 +712,7 @@ class DefaultAssetPickerViewerBuilderDelegate
       ),
       child: Container(
         padding: EdgeInsetsDirectional.only(top: context.topPadding),
-        color: themeData.canvasColor,
+        color: themeData.colorScheme.background,
         child: Row(
           children: <Widget>[
             Expanded(
@@ -895,6 +901,8 @@ class DefaultAssetPickerViewerBuilderDelegate
   ) {
     return Checkbox(
       value: isSelected,
+      fillColor:
+          MaterialStateProperty.all<Color>(themeData.colorScheme.secondary),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(999999),
       ),
@@ -976,7 +984,7 @@ class DefaultAssetPickerViewerBuilderDelegate
                 ? SystemUiOverlayStyle.light
                 : SystemUiOverlayStyle.dark),
         child: Material(
-          color: themeData.colorScheme.onSecondary,
+          color: Colors.black,
           child: Stack(
             children: <Widget>[
               Positioned.fill(child: _pageViewBuilder(context)),
