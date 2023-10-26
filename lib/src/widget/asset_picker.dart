@@ -85,6 +85,22 @@ class AssetPicker<Asset, Path> extends StatefulWidget {
     return _pickerDelegate.themeData(themeColor, light: light);
   }
 
+  static Future<List<AssetEntity>?> pickAssetsCustomDelegate(
+      BuildContext context, {
+        Key? key,
+        AssetPickerConfig pickerConfig = const AssetPickerConfig(),
+        bool useRootNavigator = true,
+        AssetPickerPageRouteBuilder<List<AssetEntity>>? pageRouteBuilder,
+      }) {
+    return _pickerDelegate.pickAssetsCustomDelegate(
+      context,
+      key: key,
+      pickerConfig: pickerConfig,
+      useRootNavigator: useRootNavigator,
+      pageRouteBuilder: pageRouteBuilder,
+    );
+  }
+
   @override
   AssetPickerState<Asset, Path> createState() =>
       AssetPickerState<Asset, Path>();

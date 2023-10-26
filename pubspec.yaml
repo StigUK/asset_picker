@@ -35,12 +35,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-dependency_overrides:
-  photo_manager:
-    git:
-      url: https://bitbucket.org/memor-i/photo-manager.git
-      ref: 2.8.0
-
 screenshots:
   - description: 'Screenshot 1'
     path: screenshots/README_1.webp

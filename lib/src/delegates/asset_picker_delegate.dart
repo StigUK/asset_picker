@@ -288,4 +288,60 @@ class AssetPickerDelegate {
       ),
     );
   }
+
+  Future<List<AssetEntity>?> pickAssetsCustomDelegate(
+      BuildContext context, {
+        Key? key,
+        AssetPickerConfig pickerConfig = const AssetPickerConfig(),
+        bool useRootNavigator = true,
+        AssetPickerPageRouteBuilder<List<AssetEntity>>? pageRouteBuilder,
+      }) async {
+    final PermissionState ps = await permissionCheck();
+    final AssetPickerPageRoute<List<AssetEntity>> route =
+        pageRouteBuilder?.call(const SizedBox.shrink()) ??
+            AssetPickerPageRoute<List<AssetEntity>>(
+              builder: (_) => const SizedBox.shrink(),
+            );
+    final DefaultAssetPickerProvider provider = DefaultAssetPickerProvider(
+      maxAssets: pickerConfig.maxAssets,
+      pageSize: pickerConfig.pageSize,
+      pathThumbnailSize: pickerConfig.pathThumbnailSize,
+      selectedAssets: pickerConfig.selectedAssets,
+      requestType: pickerConfig.requestType,
+      sortPathDelegate: pickerConfig.sortPathDelegate,
+      filterOptions: pickerConfig.filterOptions,
+      initializeDelayDuration: route.transitionDuration,
+    );
+    final Widget picker = AssetPicker<AssetEntity, AssetPathEntity>(
+      key: key,
+      builder: DefaultAssetPickerBuilderDelegate(
+        provider: provider,
+        initialPermission: ps,
+        gridCount: pickerConfig.gridCount,
+        pickerTheme: pickerConfig.pickerTheme,
+        gridThumbnailSize: pickerConfig.gridThumbnailSize,
+        previewThumbnailSize: pickerConfig.previewThumbnailSize,
+        specialPickerType: pickerConfig.specialPickerType,
+        specialItemPosition: pickerConfig.specialItemPosition,
+        specialItemBuilder: pickerConfig.specialItemBuilder,
+        loadingIndicatorBuilder: pickerConfig.loadingIndicatorBuilder,
+        selectPredicate: pickerConfig.selectPredicate,
+        shouldRevertGrid: pickerConfig.shouldRevertGrid,
+        limitedPermissionOverlayPredicate:
+        pickerConfig.limitedPermissionOverlayPredicate,
+        pathNameBuilder: pickerConfig.pathNameBuilder,
+        textDelegate: pickerConfig.textDelegate,
+        themeColor: pickerConfig.themeColor,
+        locale: Localizations.maybeLocaleOf(context),
+      ),
+    );
+    final List<AssetEntity>? result = await Navigator.of(
+      context,
+      rootNavigator: useRootNavigator,
+    ).push<List<AssetEntity>>(
+      pageRouteBuilder?.call(picker) ??
+          AssetPickerPageRoute<List<AssetEntity>>(builder: (_) => picker),
+    );
+    return result;
+  }
 }
